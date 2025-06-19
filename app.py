@@ -281,6 +281,27 @@ def afficher_dashboard_qualifications():
             title="Notes Moyennes par Fournisseur"
         )
         st.plotly_chart(fig2, use_container_width=True)
+
+# — Export Excel de toutes les qualifications —
+st.write("---")
+if st.button("📥 Exporter toutes les qualifications en Excel"):
+    # Construction du DataFrame complet
+    df_export = pd.DataFrame(st.session_state.qualifications)
+    # Création du buffer Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        df_export.to_excel(writer,
+                           sheet_name="Qualifications",
+                           index=False)
+    data = output.getvalue()
+    # Bouton de téléchargement
+    st.download_button(
+        label="Télécharger le fichier Excel",
+        data=data,
+        file_name="qualifications_fournisseurs.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 # --- Routage des pages ---
 if st.session_state.page == "home":
     col1, col2, col3 = st.columns(3)
