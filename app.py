@@ -3,22 +3,22 @@ import pandas as pd
 import json
 import os
 
-# 📍 Chemin du fichier de sauvegarde
-JSON_PATH = "data/qualifications.json"
+# 📍 Chemin ABSOLU du fichier de sauvegarde (sécurisé)
+JSON_PATH = os.path.join(os.path.dirname(__file__), "data", "qualifications.json")
 
-# 🧠 Fonction : charger les qualifications depuis le fichier JSON
+# 🧠 Charger les qualifications depuis le JSON
 def charger_qualifications():
     if os.path.exists(JSON_PATH):
         with open(JSON_PATH, "r") as f:
             return json.load(f)
     return []
 
-# 💾 Fonction : sauvegarder les qualifications dans le fichier JSON
+# 💾 Sauvegarder les qualifications dans le JSON
 def sauvegarder_qualifications(data):
     with open(JSON_PATH, "w") as f:
         json.dump(data, f, indent=2)
 
-# 🧠 Initialisation de session_state au démarrage de l'app
+# ⚙️ Session State
 if "qualifications" not in st.session_state:
     st.session_state.qualifications = charger_qualifications()
 
@@ -41,7 +41,6 @@ Bienvenue dans l’outil de qualification des fournisseurs MKP.
 Chaque qualification prend moins de 10 minutes.
 """)
 
-# État initial
 if "page" not in st.session_state:
     st.session_state.page = "home"
 if "qualifications" not in st.session_state:
@@ -167,13 +166,13 @@ def afficher_fiche_qualification():
         sauvegarder_qualifications(st.session_state.qualifications)
 
         st.success("✅ Données sauvegardées.")
-        st.write("📁 Contenu actuel du fichier JSON :")
+        st.write("📁 Aperçu du fichier qualifications.json :")
         st.json(st.session_state.qualifications)
 
         st.session_state.page = "fournisseurs"
         st.rerun()
 
-# Navigation selon la page
+# Navigation
 if st.session_state.page == "home":
     col1, col2 = st.columns(2)
     with col1:
