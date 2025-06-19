@@ -90,13 +90,13 @@ st.markdown(
 # --- Page: Dashboard Fournisseurs ---
 def afficher_dashboard_fournisseurs():
      # … tout votre code d’affichage …
-    
-    st.title("📊 Tableau des fournisseurs à qualifier")
-    fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
- st.write("---")
+    st.write("---")
     if st.button("🏠 Accueil"):
         st.session_state.page = "home"
         st.rerun()
+    st.title("📊 Tableau des fournisseurs à qualifier")
+    fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
+
     if fichier:
         try:
             df = pd.read_excel(fichier)
