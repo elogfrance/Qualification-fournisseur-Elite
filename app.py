@@ -208,18 +208,16 @@ def afficher_fiche_qualification():
         st.rerun()
 
 # Routage des pages
-if st.session_state.page == "home":
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📂️ Accéder aux fournisseurs"):
-            st.session_state.page = "fournisseurs"
-            st.rerun()
-    with col2:
-        if st.button("📘 Aide & méthode"):
-            st.info("Méthode en cours de rédaction.")
-
-elif st.session_state.page == "fournisseurs":
-    afficher_dashboard_fournisseurs()
-
-elif st.session_state.page == "qualification":
-    afficher_fiche_qualification()
+def afficher_dashboard_qualifications():
+    st.title("📈 Dashboard des qualifications")
+    df = pd.DataFrame(st.session_state.qualifications)
+    if df.empty:
+        st.info("Aucune qualification disponible.")
+        return
+    # Sélection des filtres
+    st.sidebar.markdown("**Filtres Dashboard Qualifications**")
+    fournisseurs = df["Fournisseur"].unique().tolist()
+    sel_fourn = st.sidebar.multiselect("Fournisseurs", fournisseurs, default=fournisseurs)
+    # Colonnes numériques
+    num_cols = df.select_dtypes(include="number").columns.tolist()
+    sel_cols = st.sidebar.multiselect("Critères numé."
