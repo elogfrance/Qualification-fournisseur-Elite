@@ -5,16 +5,6 @@ import os
 import shutil
 import plotly.express as px
 
-# ─── Navigation principale ───
-page = st.sidebar.selectbox(
-    "Menu",
-    ["Accueil", "Fournisseurs", "Qualification", "Dashboard Qualifs", "Aide"],
-    index=["Accueil", "Fournisseurs", "Qualification", "Dashboard Qualifs", "Aide"]
-          .index(st.session_state.get("page", "Accueil"))
-)
-st.session_state.page = page
-
-
 # --- Chemins des fichiers de données ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 QUAL_JSON_PATH = os.path.join(BASE_DIR, "data", "qualifications.json")
@@ -23,17 +13,20 @@ OLD_FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data.json")
 
 # --- Fonctions de chargement et sauvegarde ---
 def charger_qualifications():
+    """Charge le JSON des qualifications ou retourne une liste vide."""
     if os.path.exists(QUAL_JSON_PATH):
         with open(QUAL_JSON_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     return []
 
 def sauvegarder_qualifications(data):
+    """Écrit la liste de qualifications dans le JSON."""
     os.makedirs(os.path.dirname(QUAL_JSON_PATH), exist_ok=True)
     with open(QUAL_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 def charger_fournisseurs():
+    """Charge le JSON des fournisseurs, ou migre l'ancien si nécessaire."""
     os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
     if not os.path.exists(FOURN_JSON_PATH) and os.path.exists(OLD_FOURN_JSON_PATH):
         shutil.copy(OLD_FOURN_JSON_PATH, FOURN_JSON_PATH)
@@ -42,18 +35,19 @@ def charger_fournisseurs():
     return pd.DataFrame()
 
 def sauvegarder_fournisseurs(df: pd.DataFrame):
+    """Sauvegarde le DataFrame des fournisseurs en JSON."""
     os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
     df.to_json(FOURN_JSON_PATH, orient="records", indent=2, force_ascii=False)
 
-def clean(nom):
-    return str(nom).strip().lower()
+def clean_txt(s: str) -> str:
+    """Normalise une chaîne pour comparaison insensible."""
+    return str(s).strip().lower()
 
 # --- Initialisation du session state ---
 if "qualifications" not in st.session_state:
     st.session_state.qualifications = charger_qualifications()
-if "page" not in st.session_state:
-    st.session_state.page = "home"
-st.session_state.fournisseurs_df = charger_fournisseurs()
+if "fournisseurs_df" not in st.session_state:
+    st.session_state.fournisseurs_df = charger_fournisseurs()
 
 # --- Configuration de la page ---
 st.set_page_config(page_title="Qualification Fournisseur Express", page_icon="📦", layout="centered")
@@ -71,11 +65,11 @@ st.markdown(
     """
 )
 
-# --- Page: Dashboard Fournisseurs ---
-def afficher_dashboard_fournisseurs():
-    st.title("📊 Tableau des fournisseurs à qualifier")
-    fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
+# --- Fonctions d'affichage des pages ---
 
+def afficher_dashboard_fournisseurs():
+    st.header("📊 Tableau des fournisseurs à qualifier")
+    fichier = st.file_uploader("Importer le fichier des commandes (xlsx)", type=["xlsx"])
     if fichier:
         try:
             df = pd.read_excel(fichier)
@@ -97,210 +91,109 @@ def afficher_dashboard_fournisseurs():
             st.session_state.fournisseurs_df = result
             st.success("✅ Données importées et sauvegardées.")
         except Exception as e:
-            st.error(f"Erreur pendant le traitement du fichier : {e}")
-
+            st.error(f"Erreur de traitement : {e}")
     df_f = st.session_state.fournisseurs_df
     if not df_f.empty:
-        st.markdown("### Données fournisseurs en mémoire")
+        st.subheader("Données fournisseurs en mémoire")
         for i, row in df_f.iterrows():
             with st.expander(f"➡️ {row['Fournisseur']}"):
                 c1, c2 = st.columns(2)
-                c1.metric("📦 Commandes", row["Nombre_commandes"])
-                c2.metric("⏱️ Délai moyen", f"{row['Délai_moyen']} j")
-                if st.button("📝 Accéder à la qualification", key=f"btn_qualif_{i}"):
-                    st.session_state.fournisseur_en_cours = row['Fournisseur']
-                    st.session_state.page = "qualification"
-                    st.rerun()
+                c1.metric("Commandes", row["Nombre_commandes"])
+                c2.metric("Délai moyen (j)", row["Délai_moyen"])
+                if st.button("Qualifier", key=f"qualif_{i}"):
+                    st.session_state.current_fourn = row["Fournisseur"]
+                    st.session_state.qualifications = charger_qualifications()
+                    st.session_state.page = "Qualification"
+                    st.experimental_rerun()
     else:
-        st.info("📥 Veuillez importer un fichier pour voir le tableau.")
+        st.info("Aucun fournisseur en mémoire. Importez un fichier.")
 
-# --- Page: Fiche Qualification ---
+
 def afficher_fiche_qualification():
-    fournisseur = st.session_state.get("fournisseur_en_cours")
+    fournisseur = st.session_state.get("current_fourn")
     if not fournisseur:
         st.warning("Aucun fournisseur sélectionné.")
         return
+    fiches = st.session_state.qualifications
+    exist = next((f for f in fiches if clean_txt(f.get("Fournisseur")) == clean_txt(fournisseur)), None)
+    st.header(f"📝 Qualification : {fournisseur}")
+    # Champs
+    contact = st.text_input("Contact principal", value=exist.get("Contact", "") if exist else "")
+    pays = st.text_input("Pays", value=exist.get("Pays", "") if exist else "")
+    stock = st.selectbox("Stock réel identifiable ?", ["Oui", "Non"], index=["Oui","Non"].index(exist.get("Stock réel", "Oui")) if exist else 0)
+    xdock = st.selectbox("Présence de xdock ?", ["Oui", "Non"], index=["Oui","Non"].index(exist.get("Xdock", "Oui")) if exist else 0)
+    delai_stock = st.number_input("Délai annoncé stock (j)", min_value=0, value=exist.get("Délai stock", 0) if exist else 0)
+    delai_xdock = st.number_input("Délai annoncé xdock (j)", min_value=0, value=exist.get("Délai xdock", 0) if exist else 0)
+    processus = st.selectbox("Processus clair ?", ["Oui","Partiel","Non"], index=["Oui","Partiel","Non"].index(exist.get("Processus commande", "Oui")) if exist else 0)
+    transport = st.selectbox("Transport géré par", ["MKP","Fournisseur"], index=["MKP","Fournisseur"].index(exist.get("Transport", "MKP")) if exist else 0)
+    tracking = st.selectbox("Tracking fourni ?", ["Oui","Non"], index=["Oui","Non"].index(exist.get("Tracking", "Oui")) if exist else 0)
+    cond = st.selectbox("Condition de paiement", ["A la commande","A expédition","X jours"], index=["A la commande","A expédition","X jours"].index(exist.get("Condition de paiement", "A la commande")) if exist else 0)
+    poids = st.selectbox("Poids/volume communiqués ?", ["Oui","Non"], index=["Oui","Non"].index(exist.get("Poids/volume", "Oui")) if exist else 0)
+    statuts = ["Qualifié","Non qualifiés","En cours","Non éligible à l'Elite"]
+    statut = st.selectbox("Statut final", statuts, index=statuts.index(exist.get("Statut final", statuts[0])) if exist else 0)
+    comment = st.text_area("Commentaire", value=exist.get("Commentaire", "") if exist else "")
+    if st.button("Enregistrer"):  # save
+        nouvelle = {"Fournisseur": fournisseur, "Contact": contact, "Pays": pays,
+                   "Stock réel": stock, "Xdock": xdock,
+                   "Délai stock": delai_stock, "Délai xdock": delai_xdock,
+                   "Processus commande": processus, "Transport": transport,
+                   "Tracking": tracking, "Condition de paiement": cond,
+                   "Poids/volume": poids, "Statut final": statut,
+                   "Commentaire": comment}
+        # mise à jour
+        filt = [f for f in fiches if clean_txt(f.get("Fournisseur")) != clean_txt(fournisseur)]
+        filt.append(nouvelle)
+        sauvegarder_qualifications(filt)
+        st.success("Qualification enregistrée.")
+        st.session_state.page = "Fournisseurs"
+        st.experimental_rerun()
 
-    fiche_existante = next(
-        (f for f in st.session_state.qualifications if clean(f.get("Fournisseur")) == clean(fournisseur)),
-        None
-    )
-    st.title(f"📝 Qualification : {fournisseur}")
 
-    # Champs de saisie
-    contact = st.text_input("👤 Contact principal", value=fiche_existante.get("Contact", "") if fiche_existante else "")
-    pays = st.text_input("🌍 Pays", value=fiche_existante.get("Pays", "") if fiche_existante else "")
-    stock_identifiable = st.selectbox(
-        "📦 Stock réel identifiable ?", [" ", "Oui", "Non"],
-        index=[" ", "Oui", "Non"].index(fiche_existante.get("Stock réel", " ")) if fiche_existante else 0
-    )
-    xdock_present = st.selectbox(
-        "🔁 Présence de xdock ?", [" ", "Oui", "Non"],
-        index=[" ", "Oui", "Non"].index(fiche_existante.get("Xdock", " ")) if fiche_existante else 0
-    )
-    delai_stock = st.number_input(
-        "⏱️ Délai annoncé (stock)", min_value=0,
-        value=fiche_existante.get("Délai stock", 0) if fiche_existante else 0
-    )
-    delai_xdock = st.number_input(
-        "⏱️ Délai annoncé (xdock)", min_value=0,
-        value=fiche_existante.get("Délai xdock", 0) if fiche_existante else 0
-    )
-    processus_commande = st.selectbox(
-        "📋 Processus de commande clair ?", [" ", "Oui", "Partiel", "Non"],
-        index=[" ", "Oui", "Partiel", "Non"].index(fiche_existante.get("Processus commande", " ")) if fiche_existante else 0
-    )
-    transport = st.selectbox(
-        "🚚 Qui gère le transport ?", [" ", "MKP", "Fournisseur"],
-        index=[" ", "MKP", "Fournisseur"].index(fiche_existante.get("Transport", "MKP")) if fiche_existante else 0
-    )
-    tracking = st.selectbox(
-        "📦 Tracking fourni ?", [" ", "Oui", "Non"],
-        index=[" ", "Oui", "Non"].index(fiche_existante.get("Tracking", " ")) if fiche_existante else 0
-    )
-    options_cond = [" ", "A la commande", "A expédition", "X jours"]
-    idx_cond = options_cond.index(fiche_existante.get("Condition de paiement", " ")) if fiche_existante else 0
-    condition_paiement = st.selectbox("💳 Condition de paiement", options_cond, index=idx_cond)
-    poids_volume = st.selectbox(
-        "📏 Poids/volume communiqués ?", [" ", "Oui", "Non"],
-        index=[" ", "Oui", "Non"].index(fiche_existante.get("Poids/volume", " ")) if fiche_existante else 0
-    )
-    statut_final = st.selectbox(
-        "📌 Statut final", ["Non qualifiés", "Qualifié", "En cours", "Non éligible à l'Elite"],
-        index=["Non qualifiés", "Qualifié", "En cours", "Non éligible à l'Elite"].index(fiche_existante.get("Statut final", " ")) if fiche_existante else 0
-    )
-    commentaire = st.text_area("📝 Commentaire", value=fiche_existante.get("Commentaire", "") if fiche_existante else "")
-
-    if st.button("📂 Enregistrer"):
-        nouvelle_fiche = {
-            "Fournisseur": fournisseur,
-            "Contact": contact,
-            "Pays": pays,
-            "Stock réel": stock_identifiable,
-            "Xdock": xdock_present,
-            "Délai stock": delai_stock,
-            "Délai xdock": delai_xdock,
-            "Processus commande": processus_commande,
-            "Transport": transport,
-            "Tracking": tracking,
-            "Condition de paiement": condition_paiement,
-            "Poids/volume": poids_volume,
-            "Statut final": statut_final,
-            "Commentaire": commentaire
-        }
-        st.session_state.qualifications = [
-            f for f in st.session_state.qualifications
-            if clean(f.get("Fournisseur")) != clean(fournisseur)
-        ]
-        st.session_state.qualifications.append(nouvelle_fiche)
-        sauvegarder_qualifications(st.session_state.qualifications)
-        st.success("✅ Données sauvegardées.")
-        st.session_state.page = "fournisseurs"
-        st.rerun()
-
-# --- Page: Dashboard Qualifications ---
 def afficher_dashboard_qualifications():
-  def afficher_dashboard_qualifications():
-    st.title("📈 Dashboard des qualifications")
-
-    # Recharge les qualifications depuis le JSON à chaque affichage
+    st.header("📈 Dashboard des qualifications")
+    # recharge
     qualifs = charger_qualifications()
     df = pd.DataFrame(qualifs)
     if df.empty:
         st.info("Aucune qualification disponible.")
         return
-
-    # ————————————————————————————————————————————————
-    # → Section « Nombre de FRs par statut »
-    st.subheader("Répartition des fournisseurs par statut")
-    status_counts = (
-        df["Statut final"]
-        .value_counts()
-        .rename_axis("Statut")
-        .reset_index(name="Nombre")
-    )
-    # Vous pouvez choisir un bar chart…
-    fig_status = px.bar(
-        status_counts,
-        x="Statut",
-        y="Nombre",
-        color="Statut",
-        title="Nombre de fournisseurs par statut"
-    )
-    st.plotly_chart(fig_status, use_container_width=True)
-
-    # …ou un joli camembert
-    # fig_pie = px.pie(
-    #     status_counts,
-    #     names="Statut",
-    #     values="Nombre",
-    #     title="Répartition des statuts"
-    # )
-    # st.plotly_chart(fig_pie, use_container_width=True)
-    # ————————————————————————————————————————————————
-
-    # Filtres habituels
-    st.sidebar.header("Filtres Dashboard Qualifications")
-    fournisseurs = df["Fournisseur"].unique().tolist()
-    sel_fourn = st.sidebar.multiselect("Fournisseurs", fournisseurs, default=fournisseurs)
+    # répartition par statut
+    st.subheader("Nombre de fournisseurs par statut")
+    stats = df["Statut final"].value_counts().rename_axis("Statut").reset_index(name="Nombre")
+    fig = px.bar(stats, x="Statut", y="Nombre", color="Statut", title="Répartition des statuts")
+    st.plotly_chart(fig, use_container_width=True)
+    # filtres détaillés
+    st.sidebar.header("Filtres qualifications")
+    sels = st.sidebar.multiselect("Fournisseurs", df["Fournisseur"].unique(), default=df["Fournisseur"].unique())
     num_cols = df.select_dtypes(include="number").columns.tolist()
-    sel_cols = st.sidebar.multiselect("Critères numériques", num_cols, default=num_cols)
-
-    df_f = df[df["Fournisseur"].isin(sel_fourn)]
-
-    # … reste de votre code …
-
-    # Filtrer selon sélection
-    df_f = df[df["Fournisseur"].isin(sel_fourn)]
-
-    # Répartition par statut
-    st.subheader("Répartition des fournisseurs par statut")
-    status_counts = df_f["Statut final"].value_counts().reset_index()
-    status_counts.columns = ["Statut", "Nombre"]
-    fig_status = px.bar(
-        status_counts, x="Statut", y="Nombre", color="Statut",
-        title="Nombre de fournisseurs par statut"
-    )
-    st.plotly_chart(fig_status, use_container_width=True)
-
-    # Tableau synthèse
+    crits = st.sidebar.multiselect("Critères numériques", num_cols, default=num_cols)
+    sel_df = df[df["Fournisseur"].isin(sels)]
     st.subheader("Tableau synthèse")
-    st.dataframe(df_f[["Fournisseur"] + sel_cols])
+    st.dataframe(sel_df[["Fournisseur"] + crits])
+    if crits:
+        moy = sel_df.groupby("Fournisseur")[crits].mean().reset_index()
+        fig2 = px.bar(moy.melt(id_vars="Fournisseur", var_name="Critère", value_name="Moyenne"),
+                      x="Critère", y="Moyenne", color="Fournisseur", barmode="group",
+                      title="Notes Moyennes par Fournisseur")
+        st.plotly_chart(fig2, use_container_width=True)
 
-    if sel_cols:
-        # Moyennes
-        moy = df_f.groupby("Fournisseur")[sel_cols].mean().reset_index()
-        fig_bar = px.bar(
-            moy.melt(id_vars="Fournisseur", var_name="Critère", value_name="Moyenne"),
-            x="Critère", y="Moyenne", color="Fournisseur", barmode="group",
-            title="Notes Moyennes"
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
+# --- Navigation par selectbox ---
+pages = ["Accueil", "Fournisseurs", "Qualification", "Dashboard Qualifs", "Aide"]
+page = st.sidebar.selectbox("Menu", pages)
 
-        # Radar
-        radar_data = moy.set_index("Fournisseur")[sel_cols]
-        radar_melt = radar_data.reset_index().melt(id_vars="Fournisseur", var_name="Critère", value_name="Moyenne")
-        fig_radar = px.line_polar(
-            radar_melt, r="Moyenne", theta="Critère", color="Fournisseur", line_close=True,
-            title="Profil Qualité Fournisseurs"
-        )
-        st.plotly_chart(fig_radar, use_container_width=True)
-
-# --- Routage des pages ---
+# --- Routage ---
 if page == "Accueil":
-    st.markdown("**Bienvenue !** Utilisez le menu à gauche…")
+    st.write("**Bienvenue !** Sélectionnez une page dans le menu.")
 elif page == "Fournisseurs":
     afficher_dashboard_fournisseurs()
 elif page == "Qualification":
     afficher_fiche_qualification()
 elif page == "Dashboard Qualifs":
     afficher_dashboard_qualifications()
-else:  # Aide
-   
-    st.markdown(
-        """
-        - **Importer** : utilisez le bouton "Fournisseurs" pour charger vos données de commandes.
-        - **Qualifier** : accédez à chaque fiche via le tableau des fournisseurs.
-        - **Dashboard** : visualisez un résumé des qualifications réalisées.
-        """
-    )
+else:
+    st.markdown("""
+    ### Aide & méthode
+    - **Importer** : allez sur 'Fournisseurs' pour charger vos commandes.
+    - **Qualifier** : sélectionnez un fournisseur et validez la fiche.
+    - **Dashboard** : visualisez la répartition et les statistiques.
+    """)
