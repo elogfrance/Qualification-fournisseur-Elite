@@ -76,6 +76,16 @@ st.set_page_config(page_title="Qualification Fournisseur Express", page_icon="�
 
 # --- En-tête commun ---
 st.image("assets/logo_marketparts.png", width=400)
+st.title("Projet : Qualification Fournisseur Express")
+st.markdown(
+    """
+    Bienvenue dans l’outil de qualification des fournisseurs MKP.
+
+    **Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement, et à communiquer des données fiables sur leurs stocks et processus logistiques.
+
+    Chaque qualification prend moins de 10 minutes.
+    """
+)
 
 # --- Page: Dashboard Fournisseurs ---
 def afficher_dashboard_fournisseurs():
@@ -284,7 +294,7 @@ if st.session_state.page == "home":
             st.session_state.page = "dashboard_qualifs"
             st.rerun()
     with col3:
-        if st.button("📘 Aide"):
+        if st.button("📘 Détail du projet"):
             st.session_state.page = "aide"
             st.rerun()
 
@@ -298,6 +308,107 @@ elif st.session_state.page == "dashboard_qualifs":
     afficher_dashboard_qualifications()
 
 elif st.session_state.page == "aide":
-    st.title("Import")
-        st.title("📊 Tableau des fournisseurs à qualifier")
-    fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
+    st.title("Aide & méthode")
+    st.markdown(
+        """
+        📦 Qualification Fournisseur Express – Présentation du projet
+🎯 Objectif du projet
+Vérifier la fiabilité logistique des fournisseurs.
+
+S’assurer qu’ils sont capables de :
+
+expédier rapidement,
+
+distinguer les stocks réels du cross-docking (xdock),
+
+communiquer clairement sur leur processus de commande,
+
+fournir les informations de transport (tracking, poids/volume).
+
+🧩 Enjeux pour MKP
+Atteindre l’objectif de livraison client ≤ 7 jours calendaires.
+
+Prioriser la qualification des fournisseurs avec commandes pour le client Ds.
+
+Fiabiliser les délais et éviter les blocages post-commande.
+
+🖥️ Structure de l'application Streamlit
+🔹 Page d’accueil
+Logo MKP
+
+Titre : "Qualification Fournisseur Express"
+
+Résumé du projet (objectifs + enjeux)
+
+Boutons :
+
+🗂️ Voir les fournisseurs à qualifier
+
+📘 Aide & Méthode
+
+🔹 Tableau de bord des fournisseurs
+Liste des fournisseurs (tableau dynamique)
+
+Nom, Pays, Client concerné, Priorité, Statut
+
+Filtres :
+
+Client (ex : Ds)
+
+Priorité (Haute / Moyenne)
+
+Statut (Non qualifié / ✅ / ⚠️ / ❌)
+
+➡️ Clic sur un fournisseur → ouverture de sa fiche de qualification
+
+🔹 Fiche de qualification fournisseur
+Informations non modifiables :
+
+Nom du fournisseur
+
+Nb de commandes MKP
+
+Délai moyen observé
+
+Grille de qualification à remplir :
+
+Contact principal (texte)
+
+Pays (texte)
+
+Stock réel identifiable ? (Oui / Non)
+
+Présence de xdock ? (Oui / Non)
+
+Délai annoncé en stock (jours)
+
+Délai annoncé xdock (jours)
+
+Processus de commande clair ? (Oui / Partiel / Non)
+
+Qui gère le transport ? (MKP / Fournisseur)
+
+Tracking fourni ? (Oui / Non)
+
+Poids/volume communiqués ? (Oui / Non)
+
+✅ Statut final : Eligible / En cours / Non éligible
+
+Commentaire global (texte libre)
+
+Boutons :
+
+💾 Enregistrer la fiche
+
+↩️ Retour
+
+🔹 Vue d’ensemble / export
+Tableau complet de tous les fournisseurs avec leur statut final
+
+Export possible en .xlsx ou .pdf
+
+Affichage des commentaires globaux en infobulle (tooltip)
+
+
+        """
+    )
