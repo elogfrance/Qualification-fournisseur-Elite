@@ -76,16 +76,7 @@ st.set_page_config(page_title="Qualification Fournisseur Express", page_icon="�
 
 # --- En-tête commun ---
 st.image("assets/logo_marketparts.png", width=400)
-st.title("Projet : Qualification Fournisseur Express")
-st.markdown(
-    """
-    Bienvenue dans l’outil de qualification des fournisseurs MKP.
 
-    **Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement, et à communiquer des données fiables sur leurs stocks et processus logistiques.
-
-    Chaque qualification prend moins de 10 minutes.
-    """
-)
 
 # --- Page: Dashboard Fournisseurs ---
 def afficher_dashboard_fournisseurs():
@@ -218,79 +209,8 @@ def afficher_fiche_qualification():
         st.success("✅ Données sauvegardées.")
         st.session_state.page = "fournisseurs"
         st.rerun()
-# --- Présentation du projet ---
-def afficher_presentation():
-    # Titre principal
-    st.title("📦 Qualification Fournisseur Express")
-    st.markdown("### Présentation du projet")
 
-    # Objectif
-    st.header("🎯 Objectif du projet")
-    st.markdown(
-        """
-        - Vérifier la fiabilité **logistique** des fournisseurs.
-        """
-    )
 
-    # Contexte général
-    st.header("🏢 Contexte général")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(
-            """
-            - **Entreprise** : MKP  
-            - **Projet** : Qualification fournisseur express
-            """
-        )
-    with col2:
-        st.markdown(
-            """
-            - **Porté par** :  
-              - Nataliia  
-              - Leila  
-              - Véronique
-            """
-        )
-
-    # Fournisseurs & Logistique
-    st.header("📦 Fournisseurs & Logistique")
-    st.markdown(
-        """
-        - Fournisseurs et clients répartis dans toute l’Europe.  
-        - Les fournisseurs annoncent des produits comme étant **in stock** sans distinguer :  
-          - Stocks réellement disponibles  
-          - Stocks en **cross-docking** (xdock)
-        """
-    )
-
-    # Problèmes identifiés
-    st.header("❌ Problèmes identifiés")
-    st.markdown(
-        """
-        - **Manque de transparence** :  
-          - Fichiers de stock ne distinguent pas « stock » vs « xdock ».  
-          - Incapacité à anticiper la disponibilité rélle au moment de la commande.  
-        - **Délai de préparation** :  
-          - Temps de préparation non communiqués.  
-          - Outil de traçabilité des délais réels récemment disponible.  
-        - **Impact opérationnel** :  
-          - Délai de livraison incertain.  
-          - Mauvaise information client.  
-          - Détérioration de la promesse logistique et de la performance.
-        """
-    )
-
-    # Objectifs du projet
-    st.header("✅ Objectifs du projet")
-    st.markdown(
-        """
-        1. Qualifier les fournisseurs selon la réalité de leurs stocks.  
-        2. Identifier ceux qui font réellement du **stock** vs. du **xdock**.  
-        3. Fixer des engagements logistiques cibles :  
-           - Expédition sous **24h** pour produits in stock.  
-           - Expédition sous **J+3** pour produits en xdock.
-        """
-    )
 def afficher_dashboard_qualifications():
      # … tout votre code d’affichage …
     st.write("---")
