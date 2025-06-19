@@ -190,17 +190,55 @@ def afficher_fiche_qualification():
 
 # --- Page: Dashboard Qualifications ---
 def afficher_dashboard_qualifications():
+  def afficher_dashboard_qualifications():
     st.title("📈 Dashboard des qualifications")
-    df = pd.DataFrame(st.session_state.qualifications)
+
+    # Recharge les qualifications depuis le JSON à chaque affichage
+    qualifs = charger_qualifications()
+    df = pd.DataFrame(qualifs)
     if df.empty:
         st.info("Aucune qualification disponible.")
         return
-    # Filtres
+
+    # ————————————————————————————————————————————————
+    # → Section « Nombre de FRs par statut »
+    st.subheader("Répartition des fournisseurs par statut")
+    status_counts = (
+        df["Statut final"]
+        .value_counts()
+        .rename_axis("Statut")
+        .reset_index(name="Nombre")
+    )
+    # Vous pouvez choisir un bar chart…
+    fig_status = px.bar(
+        status_counts,
+        x="Statut",
+        y="Nombre",
+        color="Statut",
+        title="Nombre de fournisseurs par statut"
+    )
+    st.plotly_chart(fig_status, use_container_width=True)
+
+    # …ou un joli camembert
+    # fig_pie = px.pie(
+    #     status_counts,
+    #     names="Statut",
+    #     values="Nombre",
+    #     title="Répartition des statuts"
+    # )
+    # st.plotly_chart(fig_pie, use_container_width=True)
+    # ————————————————————————————————————————————————
+
+    # Filtres habituels
     st.sidebar.header("Filtres Dashboard Qualifications")
     fournisseurs = df["Fournisseur"].unique().tolist()
     sel_fourn = st.sidebar.multiselect("Fournisseurs", fournisseurs, default=fournisseurs)
     num_cols = df.select_dtypes(include="number").columns.tolist()
     sel_cols = st.sidebar.multiselect("Critères numériques", num_cols, default=num_cols)
+
+    df_f = df[df["Fournisseur"].isin(sel_fourn)]
+
+    # … reste de votre code …
 
     # Filtrer selon sélection
     df_f = df[df["Fournisseur"].isin(sel_fourn)]
