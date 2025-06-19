@@ -190,11 +190,62 @@ def afficher_fiche_qualification():
 
 # --- Page: Dashboard Qualifications ---
 def afficher_dashboard_qualifications():
-    st.title("📈 Dashboard des qualifications")
-    df = pd.DataFrame(st.session_state.qualifications)
-    if df.empty:
-        st.info("Aucune qualification disponible.")
-        return
+    st.header("📈 Dashboard des qualifications")
+
+    # 1) On part de la liste complète des fournisseurs chargée en mémoire
+    df_fourn = st.session_state.fournisseurs_df.copy()
+
+    # 2) On charge les qualifications existantes
+    df_qual = pd.DataFrame(charger_qualifications())
+    if df_qual.empty:
+        # Si aucune qualification n'existe encore, on crée juste la colonne
+        df_qual = pd.DataFrame(columns=["Fournisseur", "Statut final"])
+
+    # 3) LEFT MERGE pour garder tous les fournisseurs
+    df = df_fourn.merge(df_qual, on="Fournisseur", how="left")
+
+    # 4) On remplace les NaN (ceux sans fiche) par "Non qualifiés"
+    df["Statut final"] = df["Statut final"].fillna("Non qualifiés")
+
+    # — Répartition par statut —
+    st.subheader("Répartition des fournisseurs par statut")
+    repart = (
+        df["Statut final"]
+        .value_counts()
+        .rename_axis("Statut")
+        .reset_index(name="Nombre")
+    )
+    fig = px.bar(
+        repart,
+        x="Statut",
+        y="Nombre",
+        color="Statut",
+        title="Nombre de fournisseurs par statut"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # — Filtres & tableau synthèse —
+    st.sidebar.header("Filtres qualifications")
+    all_fourn = df["Fournisseur"].tolist()
+    sel_fourn = st.sidebar.multiselect("Fournisseurs", all_fourn, default=all_fourn)
+
+    num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+    sel_cols = st.sidebar.multiselect("Critères numériques", num_cols, default=num_cols)
+
+    df_sel = df[df["Fournisseur"].isin(sel_fourn)]
+
+    st.subheader("Tableau synthèse")
+    st.dataframe(df_sel[["Fournisseur"] + sel_cols])
+
+    if sel_cols:
+        moy = df_sel.groupby("Fournisseur")[sel_cols].mean().reset_index()
+        fig2 = px.bar(
+            moy.melt(id_vars="Fournisseur", var_name="Critère", value_name="Moyenne"),
+            x="Critère", y="Moyenne", color="Fournisseur", barmode="group",
+            title="Notes Moyennes par Fournisseur"
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+
     # Filtres
     st.sidebar.header("Filtres Dashboard Qualifications")
     fournisseurs = df["Fournisseur"].unique().tolist()
