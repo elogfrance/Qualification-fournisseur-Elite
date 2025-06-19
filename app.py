@@ -81,9 +81,7 @@ st.markdown(
     """
     Bienvenue dans l’outil de qualification des fournisseurs MKP.
 
-    **Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement, et à communiquer des données fiables sur leurs stocks et processus logistiques.
-
-    Chaque qualification prend moins de 10 minutes.
+    **Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier en 24h, et à communiquer des données fiables sur leurs stocks et processus logistiques.
     """
 )
 
