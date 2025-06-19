@@ -298,11 +298,6 @@ elif st.session_state.page == "dashboard_qualifs":
     afficher_dashboard_qualifications()
 
 elif st.session_state.page == "aide":
-    st.title("Aide & méthode")
-    st.markdown(
-        """
-        - **Importer** : utilisez le bouton "Fournisseurs" pour charger vos données de commandes.
-        - **Qualifier** : accédez à chaque fiche via le tableau des fournisseurs.
-        - **Dashboard** : visualisez un résumé des qualifications réalisées.
-        """
-    )
+    st.title("Import")
+        st.title("📊 Tableau des fournisseurs à qualifier")
+    fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
