@@ -1,5 +1,27 @@
 import streamlit as st
 import pandas as pd
+import json
+import os
+
+# 📍 Chemin du fichier de sauvegarde
+JSON_PATH = "data/qualifications.json"
+
+# 🧠 Fonction : charger les qualifications depuis le fichier JSON
+def charger_qualifications():
+    if os.path.exists(JSON_PATH):
+        with open(JSON_PATH, "r") as f:
+            return json.load(f)
+    return []
+
+# 💾 Fonction : sauvegarder les qualifications dans le fichier JSON
+def sauvegarder_qualifications(data):
+    with open(JSON_PATH, "w") as f:
+        json.dump(data, f, indent=2)
+
+# 🧠 Initialisation de session_state au démarrage de l'app
+if "qualifications" not in st.session_state:
+    st.session_state.qualifications = charger_qualifications()
+
 
 st.set_page_config(
     page_title="Qualification Fournisseur Express",
@@ -138,10 +160,20 @@ def afficher_fiche_qualification():
             "Commentaire": commentaire
         }
 
-        st.session_state.qualifications = [
-            f for f in st.session_state.qualifications if clean(f["Fournisseur"]) != clean(fournisseur)
-        ]
-        st.session_state.qualifications.append(nouvelle_fiche)
+       # Nettoyage du nom du fournisseur pour comparaison
+def clean(n): return str(n).strip().lower()
+
+# Supprimer la fiche existante s’il y en a une
+st.session_state.qualifications = [
+    f for f in st.session_state.qualifications if clean(f["Fournisseur"]) != clean(fournisseur)
+]
+
+# Ajouter la nouvelle fiche
+st.session_state.qualifications.append(nouvelle_fiche)
+
+# Sauvegarder dans le fichier JSON
+sauvegarder_qualifications(st.session_state.qualifications)
+
         st.success("✅ Fiche enregistrée.")
         st.session_state.page = "fournisseurs"
         st.rerun()
