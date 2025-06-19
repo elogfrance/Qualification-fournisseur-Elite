@@ -308,107 +308,60 @@ elif st.session_state.page == "dashboard_qualifs":
     afficher_dashboard_qualifications()
 
 elif st.session_state.page == "aide":
-    st.title("Aide & méthode")
+    st.title("📦 Qualification Fournisseur Express – Présentation du projet 🎯 Objectif du projet Vérifier la fiabilité logistique des fournisseurs.")
     st.markdown(
         """
-        📦 Qualification Fournisseur Express – Présentation du projet
-🎯 Objectif du projet
-Vérifier la fiabilité logistique des fournisseurs.
+       
 
-S’assurer qu’ils sont capables de :
+🏢 Contexte général
+Entreprise : MKP
 
-expédier rapidement,
+Projet : Qualification fournisseur express
 
-distinguer les stocks réels du cross-docking (xdock),
-
-communiquer clairement sur leur processus de commande,
-
-fournir les informations de transport (tracking, poids/volume).
-
-🧩 Enjeux pour MKP
-Atteindre l’objectif de livraison client ≤ 7 jours calendaires.
-
-Prioriser la qualification des fournisseurs avec commandes pour le client Ds.
-
-Fiabiliser les délais et éviter les blocages post-commande.
-
-🖥️ Structure de l'application Streamlit
-🔹 Page d’accueil
-Logo MKP
-
-Titre : "Qualification Fournisseur Express"
-
-Résumé du projet (objectifs + enjeux)
-
-Boutons :
-
-🗂️ Voir les fournisseurs à qualifier
-
-📘 Aide & Méthode
-
-🔹 Tableau de bord des fournisseurs
-Liste des fournisseurs (tableau dynamique)
-
-Nom, Pays, Client concerné, Priorité, Statut
-
-Filtres :
-
-Client (ex : Ds)
-
-Priorité (Haute / Moyenne)
-
-Statut (Non qualifié / ✅ / ⚠️ / ❌)
-
-➡️ Clic sur un fournisseur → ouverture de sa fiche de qualification
-
-🔹 Fiche de qualification fournisseur
-Informations non modifiables :
-
-Nom du fournisseur
-
-Nb de commandes MKP
-
-Délai moyen observé
-
-Grille de qualification à remplir :
-
-Contact principal (texte)
-
-Pays (texte)
-
-Stock réel identifiable ? (Oui / Non)
-
-Présence de xdock ? (Oui / Non)
-
-Délai annoncé en stock (jours)
-
-Délai annoncé xdock (jours)
-
-Processus de commande clair ? (Oui / Partiel / Non)
-
-Qui gère le transport ? (MKP / Fournisseur)
-
-Tracking fourni ? (Oui / Non)
-
-Poids/volume communiqués ? (Oui / Non)
-
-✅ Statut final : Eligible / En cours / Non éligible
-
-Commentaire global (texte libre)
-
-Boutons :
-
-💾 Enregistrer la fiche
-
-↩️ Retour
-
-🔹 Vue d’ensemble / export
-Tableau complet de tous les fournisseurs avec leur statut final
-
-Export possible en .xlsx ou .pdf
-
-Affichage des commentaires globaux en infobulle (tooltip)
+Porté par : une équipe composée de Nataliia, Leila, Véronique
 
 
-        """
-    )
+📦 Fournisseurs & Logistique
+Fournisseurs et clients répartis dans toute l’Europe
+
+Les fournisseurs annoncent des produits comme étant "in stock" sans distinguer :
+
+les stocks réellement disponibles
+
+les stocks en cross-docking (xdock)
+
+❌ Problèmes identifiés
+Manque de transparence :
+
+Les fichiers de stock fournis ne distinguent pas les produits "stock" des produits "xdock"
+
+MKP ne sait pas à l’avance, au moment de la commande, si les produits sont disponibles immédiatement
+
+Délai de préparation :
+
+Les temps de préparation ne sont pas communiqués
+
+MKP dispose depuis peu d’un outil de traçabilité des délais réels
+
+Ces problèmes sont généralisés à l’ensemble des fournisseurs
+
+Impact opérationnel :
+
+Délai de livraison incertain
+
+Mauvaise information client
+
+Détérioration de la promesse logistique et de la performance
+
+✅ Objectifs du projet
+Qualifier les fournisseurs en fonction de la réalité de leurs stocks
+
+Identifier ceux qui font réellement du stock vs. du xdock
+
+Fixer des engagements logistiques cibles :
+
+Expédition sous 24h pour les produits in stock
+
+Expédition sous J+3 pour les produits en xdock
+
+
