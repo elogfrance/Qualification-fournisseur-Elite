@@ -294,14 +294,7 @@ if st.button("📥 Exporter toutes les qualifications en Excel"):
                            sheet_name="Qualifications",
                            index=False)
     data = output.getvalue()
-    # Bouton de téléchargement
-    st.download_button(
-        label="Télécharger le fichier Excel",
-        data=data,
-        file_name="qualifications_fournisseurs.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
+    
 # --- Routage des pages ---
 if st.session_state.page == "home":
     col1, col2, col3 = st.columns(3)
