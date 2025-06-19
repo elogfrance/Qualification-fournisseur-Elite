@@ -200,13 +200,20 @@ def afficher_dashboard_qualifications():
     df["Statut final"] = df["Statut final"].fillna("Non qualifiés")
 
         # Répartition par statut
-    st.subheader("Répartition des fournisseurs par statut")
-    stats = df["Statut final"].value_counts().rename_axis("Statut").reset_index(name="Nombre")
-    fig = px.pie(
-        stats,
-        names="Statut",
-        values="Nombre",
-        title="Répartition des statuts (camembert)"
+   # Nouveau code (camembert)
+stats = df["Statut final"] \
+    .value_counts() \
+    .rename_axis("Statut") \
+    .reset_index(name="Nombre")
+
+fig = px.pie(
+    stats,
+    names="Statut",
+    values="Nombre",
+    title="Répartition des statuts (camembert)",
+    hole=0  # 0 pour un camembert plein, >0 pour un donut
+)
+st.plotly_chart(fig, use_container_width=True)
     )
     st.plotly_chart(fig, use_container_width=True)
 
