@@ -89,6 +89,11 @@ st.markdown(
 
 # --- Page: Dashboard Fournisseurs ---
 def afficher_dashboard_fournisseurs():
+     # … tout votre code d’affichage …
+    st.write("---")
+    if st.button("🏠 Accueil"):
+        st.session_state.page = "home"
+        st.rerun()
     st.title("📊 Tableau des fournisseurs à qualifier")
     fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
 
@@ -215,6 +220,11 @@ def afficher_fiche_qualification():
         st.rerun()
 
 def afficher_dashboard_qualifications():
+     # … tout votre code d’affichage …
+    st.write("---")
+    if st.button("🏠 Accueil"):
+        st.session_state.page = "home"
+        st.rerun()
     st.header("📈 Dashboard des qualifications")
     st.markdown("Delais et nbr de commandes mesurés sur 90 jours avant le 19/06/2025")
     st.markdown("Delais caluclés entre validation arc et date de reception e log")
