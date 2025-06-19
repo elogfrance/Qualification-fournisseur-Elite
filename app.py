@@ -82,10 +82,11 @@ def afficher_dashboard_fournisseurs():
             df = df.dropna(subset=["Date ARC", "Date Ready", "Fournisseur"])
 
             df["Délai (jours)"] = (df["Date Ready"] - df["Date ARC"]).dt.days
+            df["Délai (jours)"] = pd.to_numeric(df["Délai (jours)"], errors="coerce")
 
             result = df.groupby("Fournisseur").agg(
                 Nombre_commandes=("Fournisseur", "count"),
-                Délai_moyen=("Délai (jours)", lambda x: round(x.mean(), 1))
+                Délai_moyen=("Délai (jours)", lambda x: round(x.dropna().mean(), 1))
             ).reset_index()
 
             result = result.sort_values(by="Nombre_commandes", ascending=False)
