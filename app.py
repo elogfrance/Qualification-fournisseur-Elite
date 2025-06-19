@@ -378,4 +378,6 @@ elif st.session_state.page == "qualification":
 
 elif st.session_state.page == "dashboard_qualifs":
     afficher_dashboard_qualifications()
+elif st.session_state.page == "dashboard_qualifs":
+    afficher_presentation()
 
