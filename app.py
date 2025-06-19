@@ -130,7 +130,7 @@ def afficher_dashboard_fournisseurs():
                 afficher_form_qualification(row['Fournisseur'])
 
 # --- Page: Dashboard Qualifs ---
-def afficher_dashboard_qualifications():
+    def afficher_dashboard_qualifications():
     st.header("📈 Dashboard des qualifications")
     # Charger liste des fournisseurs (tout) et leurs qualifications
     df_fourn = st.session_state.fournisseurs_df.copy()
@@ -171,3 +171,18 @@ def afficher_dashboard_qualifications():
             title="Notes Moyennes par Fournisseur"
         )
         st.plotly_chart(fig2, use_container_width=True)
+        # --- Navigation principale ---
+pages = ["Fournisseurs", "Dashboard Qualifs", "Aide"]
+page = st.sidebar.selectbox("Menu", pages)
+
+if page == "Fournisseurs":
+    afficher_dashboard_fournisseurs()
+elif page == "Dashboard Qualifs":
+    afficher_dashboard_qualifications()
+else:
+    st.markdown("""
+    ### Aide & méthode
+    - **Importer** : page Fournisseurs → importer commandes  
+    - **Qualifier** : cliquer sur Qualifier sous un fournisseur  
+    - **Dashboard** : visualiser la répartition et le tableau synthèse
+    """)
