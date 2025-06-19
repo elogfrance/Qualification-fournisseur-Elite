@@ -76,7 +76,16 @@ st.set_page_config(page_title="Qualification Fournisseur Express", page_icon="�
 
 # --- En-tête commun ---
 st.image("assets/logo_marketparts.png", width=400)
+st.title("Projet : Qualification Fournisseur Express")
+st.markdown(
+    """
+    Bienvenue dans l’outil de qualification des fournisseurs MKP.
 
+    **Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement, et à communiquer des données fiables sur leurs stocks et processus logistiques.
+
+    Chaque qualification prend moins de 10 minutes.
+    """
+)
 
 # --- Page: Dashboard Fournisseurs ---
 def afficher_dashboard_fournisseurs():
