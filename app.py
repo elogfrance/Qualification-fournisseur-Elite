@@ -362,6 +362,6 @@ Fixer des engagements logistiques cibles :
 
 Expédition sous 24h pour les produits in stock
 
-Expédition sous J+3 pour les produits en xdock
+Expédition sous J+3 pour les produits en xdock""")
 
 
