@@ -63,12 +63,32 @@ def main():
         st.session_state.page = "home"
 
     col1, col2, col3 = st.columns(3)
+
     with col1:
         if st.button("🗂️ Accéder aux fournisseurs"):
             st.session_state.page = "fournisseurs"
             st.rerun()
-   with col2:
-    if st.button("📘 Aide & méthode"):
-        st.session_state.page = "aide"
-        st.rerun()
 
+    with col2:
+        if st.button("📘 Aide & méthode"):
+            st.session_state.page = "aide"
+            st.rerun()
+
+    with col3:
+        if st.button("📦 Suivi délais réels"):
+            st.session_state.page = "delais"
+            st.rerun()
+
+    # Navigation
+    if st.session_state.page == "home":
+        st.info("👈 Sélectionne une section pour commencer.")
+    elif st.session_state.page == "fournisseurs":
+        st.warning("📌 La section 'fournisseurs' est en cours de développement.")
+    elif st.session_state.page == "aide":
+        st.info("📘 Une documentation simple sera ajoutée ici.")
+    elif st.session_state.page == "delais":
+        afficher_suivi_delais()
+
+# Lancement principal
+if __name__ == "__main__":
+    main()
