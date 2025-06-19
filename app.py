@@ -26,7 +26,7 @@ def charger_fournisseurs():
         shutil.copy(OLD_FOURN_JSON_PATH, FOURN_JSON_PATH)
     if os.path.exists(FOURN_JSON_PATH):
         return pd.read_json(FOURN_JSON_PATH)
-    return None
+    return pd.DataFrame()
 
 def sauvegarder_fournisseurs(df: pd.DataFrame):
     os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
@@ -35,10 +35,8 @@ def sauvegarder_fournisseurs(df: pd.DataFrame):
 if "qualifications" not in st.session_state:
     st.session_state.qualifications = charger_qualifications()
 
-if "fournisseurs_df" not in st.session_state:
-    df_init = charger_fournisseurs()
-    if df_init is not None:
-        st.session_state.fournisseurs_df = df_init
+# toujours charger le dernier fichier fournisseur à chaque lancement
+st.session_state.fournisseurs_df = charger_fournisseurs()
 
 st.set_page_config(
     page_title="Qualification Fournisseur Express",
@@ -91,16 +89,19 @@ def afficher_dashboard_fournisseurs():
 
             result = result.sort_values(by="Nombre_commandes", ascending=False)
 
-            st.session_state.fournisseurs_df = result
+            # sauvegarde immédiate et maj session
             sauvegarder_fournisseurs(result)
+            st.session_state.fournisseurs_df = result
 
-            st.success("✅ Données traitées avec succès.")
-            st.dataframe(result)
-
+            st.success("✅ Données importées et sauvegardées.")
         except Exception as e:
             st.error(f"Erreur pendant le traitement du fichier : {e}")
+
+    if not st.session_state.fournisseurs_df.empty:
+        st.markdown("### Données fournisseurs en mémoire")
+        st.dataframe(st.session_state.fournisseurs_df)
     else:
-        st.info("📥 Veuillez importer un fichier contenant les colonnes : Supplier name, Date ARC fournisseur reçu, Date ready for pickup.")
+        st.info("📥 Veuillez importer un fichier pour voir le tableau.")
 
 def afficher_fiche_qualification():
     fournisseur = st.session_state.get("fournisseur_en_cours")
