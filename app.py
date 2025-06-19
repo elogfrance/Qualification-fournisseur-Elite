@@ -3,65 +3,55 @@ import pandas as pd
 import json
 import os
 import shutil
-from pathlib import Path
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 📁 Définitions des chemins
-# ─────────────────────────────────────────────────────────────────────────────
-BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
-QUAL_JSON_PATH       = DATA_DIR / "qualifications.json"
-FOURN_JSON_PATH      = DATA_DIR / "fournisseurs_data_current.json"
-OLD_FOURN_JSON_PATH  = DATA_DIR / "fournisseurs_data.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+QUAL_JSON_PATH = os.path.join(BASE_DIR, "data", "qualifications.json")
+FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data_current.json")
+OLD_FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data.json")
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ⚙️ Fonctions de chargement / sauvegarde
-# ─────────────────────────────────────────────────────────────────────────────
 def charger_qualifications():
-    if QUAL_JSON_PATH.exists():
-        with open(QUAL_JSON_PATH, "r", encoding="utf-8") as f:
+    if os.path.exists(QUAL_JSON_PATH):
+        with open(QUAL_JSON_PATH, "r") as f:
             return json.load(f)
     return []
 
 def sauvegarder_qualifications(data):
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    with open(QUAL_JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    os.makedirs(os.path.dirname(QUAL_JSON_PATH), exist_ok=True)
+    with open(QUAL_JSON_PATH, "w") as f:
+        json.dump(data, f, indent=2)
 
 def charger_fournisseurs():
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if not FOURN_JSON_PATH.exists() and OLD_FOURN_JSON_PATH.exists():
+    os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
+    if not os.path.exists(FOURN_JSON_PATH) and os.path.exists(OLD_FOURN_JSON_PATH):
         shutil.copy(OLD_FOURN_JSON_PATH, FOURN_JSON_PATH)
-    if FOURN_JSON_PATH.exists():
+    if os.path.exists(FOURN_JSON_PATH):
         return pd.read_json(FOURN_JSON_PATH)
     return pd.DataFrame()
 
 def sauvegarder_fournisseurs(df: pd.DataFrame):
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
     df.to_json(FOURN_JSON_PATH, orient="records", force_ascii=False, indent=2)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 🔨 Initialisation du session_state
-# ─────────────────────────────────────────────────────────────────────────────
 if "qualifications" not in st.session_state:
     st.session_state.qualifications = charger_qualifications()
+
+# ⚠️ Toujours recharger la dernière version des fournisseurs
 st.session_state.fournisseurs_df = charger_fournisseurs()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 🖥️ Configuration générale de l’app
-# ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Qualification Fournisseur Express",
     page_icon="📦",
     layout="centered"
 )
+
 st.image("assets/logo_marketparts.png", width=200)
+
 st.title("Projet : Qualification Fournisseur Express")
+
 st.markdown("""
 Bienvenue dans l’outil de qualification des fournisseurs MKP.
 
-**Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement,  
-et à communiquer des données fiables sur leurs stocks et processus logistiques.
+**Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement, et à communiquer des données fiables sur leurs stocks et processus logistiques.
 
 Chaque qualification prend moins de 10 minutes.
 """)
@@ -69,174 +59,133 @@ Chaque qualification prend moins de 10 minutes.
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 🧹 Fonction utilitaire pour normaliser les noms
-# ─────────────────────────────────────────────────────────────────────────────
-def clean(text):
-    return str(text).strip().lower()
+def clean(nom):
+    return str(nom).strip().lower()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 📊 Fonction : tableau de bord des fournisseurs
-# ─────────────────────────────────────────────────────────────────────────────
 def afficher_dashboard_fournisseurs():
     st.title("📊 Tableau des fournisseurs à qualifier")
-
-    # Import du fichier Excel
     fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
+
     if fichier:
         try:
             df = pd.read_excel(fichier)
             df = df.rename(columns={
-                "Supplier name":                  "Fournisseur",
-                "Date ARC fournisseur reçu":      "Date ARC",
-                "Date ready for pickup":          "Date Ready"
+                "Supplier name": "Fournisseur",
+                "Date ARC fournisseur reçu": "Date ARC",
+                "Date ready for pickup": "Date Ready"
             })
-            df["Date ARC"]   = pd.to_datetime(df["Date ARC"], errors="coerce")
+
+            df["Date ARC"] = pd.to_datetime(df["Date ARC"], errors="coerce")
             df["Date Ready"] = pd.to_datetime(df["Date Ready"], errors="coerce")
-            df = df.dropna(subset=["Fournisseur", "Date ARC", "Date Ready"])
+            df = df.dropna(subset=["Date ARC", "Date Ready", "Fournisseur"])
+
             df["Délai (jours)"] = (df["Date Ready"] - df["Date ARC"]).dt.days
             df["Délai (jours)"] = pd.to_numeric(df["Délai (jours)"], errors="coerce")
 
-            result = (
-                df.groupby("Fournisseur")
-                  .agg(
-                    Nombre_commandes=("Fournisseur", "count"),
-                    Délai_moyen=("Délai (jours)", lambda x: round(x.mean(skipna=True),1))
-                  )
-                  .reset_index()
-                  .sort_values("Nombre_commandes", ascending=False)
-            )
+            result = df.groupby("Fournisseur").agg(
+                Nombre_commandes=("Fournisseur", "count"),
+                Délai_moyen=("Délai (jours)", lambda x: round(x.dropna().mean(), 1))
+            ).reset_index()
+
+            result = result.sort_values(by="Nombre_commandes", ascending=False)
 
             sauvegarder_fournisseurs(result)
             st.session_state.fournisseurs_df = result
+
             st.success("✅ Données importées et sauvegardées.")
         except Exception as e:
             st.error(f"Erreur pendant le traitement du fichier : {e}")
 
-    # Affichage de la liste en mémoire
     if not st.session_state.fournisseurs_df.empty:
         st.markdown("### Données fournisseurs en mémoire")
 
-        for idx, row in st.session_state.fournisseurs_df.iterrows():
-            fournisseur    = row["Fournisseur"]
-            nb_commandes   = int(row["Nombre_commandes"])
-            delai_moyen    = row["Délai_moyen"]
+        for index, row in st.session_state.fournisseurs_df.iterrows():
+            with st.expander(f"➡️ {row['Fournisseur']}"):
+                col1, col2 = st.columns(2)
+                col1.metric("📦 Commandes", row["Nombre_commandes"])
+                col2.metric("⏱️ Délai moyen", f"{row['Délai_moyen']} j")
 
-            # Nombre de qualifications déjà saisies pour ce fournisseur
-            nb_traitements = sum(
-                1 for q in st.session_state.qualifications
-                if clean(q.get("Fournisseur")) == clean(fournisseur)
-            )
-
-            col1, col2, col3 = st.columns([4, 2, 2])
-            col1.markdown(
-                f"**{fournisseur}**  \n"
-                f"• Commandes : {nb_commandes}  \n"
-                f"• Traitements : {nb_traitements}"
-            )
-            col2.metric("⏱️ Délai moyen (j)", f"{delai_moyen}")
-            if col3.button("📝 Qualifier", key=f"qualif_{idx}"):
-                st.session_state.fournisseur_en_cours = fournisseur
-                st.session_state.page = "qualification"
-                st.rerun()
+                if st.button("📝 Accéder à la qualification", key=f"btn_qualif_{index}"):
+                    st.session_state.fournisseur_en_cours = row["Fournisseur"]
+                    st.session_state.page = "qualification"
+                    st.rerun()
     else:
         st.info("📥 Veuillez importer un fichier pour voir le tableau.")
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 📝 Fonction : formulaire de qualification
-# ─────────────────────────────────────────────────────────────────────────────
 def afficher_fiche_qualification():
     fournisseur = st.session_state.get("fournisseur_en_cours")
     if not fournisseur:
         st.warning("Aucun fournisseur sélectionné.")
         return
 
-    # On récupère ou on initialise la fiche
-    fiche = next(
-        (q for q in st.session_state.qualifications if clean(q["Fournisseur"]) == clean(fournisseur)),
-        {"Fournisseur": fournisseur}
+    fiche_existante = next(
+        (
+            f for f in st.session_state.qualifications
+            if clean(f.get("Fournisseur")) == clean(fournisseur)
+        ),
+        None
     )
 
     st.title(f"📝 Qualification : {fournisseur}")
-    st.markdown("---")
 
-    # Définition simplifiée des champs (label, type, options)
-    champs = [
-        ("Contact principal",     "text",    None),
-        ("Pays",                  "text",    None),
-        ("Nb de commandes MKP",   "number_static", None),
-        ("Délai moyen observé",   "number_static", None),
-        ("Stock réel identifiable ?", "select", ["Oui","Non"]),
-        ("Présence de xdock ?",       "select", ["Oui","Non"]),
-        ("Délai annoncé en stock",    "number",  None),
-        ("Délai annoncé xdock",       "number",  None),
-        ("Processus de commande clair ?", "select", ["Oui","Partiel","Non"]),
-        ("Qui gère le transport ?",       "select", ["MKP","Fournisseur"]),
-        ("Tracking fourni ?",             "select", ["Oui","Non"]),
-        ("Poids/volume communiqués ?",    "select", ["Oui","Non"]),
-        ("✅ Statut final",                "select", ["Eligible","En cours","Non eligible"]),
-        ("Commentaire global",            "textarea", None),
-    ]
+    contact = st.text_input("👤 Contact principal", value=fiche_existante.get("Contact") if fiche_existante else "")
+    pays = st.text_input("🌍 Pays", value=fiche_existante.get("Pays") if fiche_existante else "")
+    stock_identifiable = st.selectbox("📦 Stock réel identifiable ?", ["Oui", "Non"],
+                                      index=["Oui", "Non"].index(fiche_existante["Stock réel"]) if fiche_existante else 0)
+    xdock_present = st.selectbox("🔁 Présence de xdock ?", ["Oui", "Non"],
+                                 index=["Oui", "Non"].index(fiche_existante["Xdock"]) if fiche_existante else 0)
+    delai_stock = st.number_input("⏱️ Délai annoncé (stock)", min_value=0,
+                                  value=fiche_existante.get("Délai stock", 0) if fiche_existante else 0)
+    delai_xdock = st.number_input("⏱️ Délai annoncé (xdock)", min_value=0,
+                                  value=fiche_existante.get("Délai xdock", 0) if fiche_existante else 0)
+    processus_commande = st.selectbox("📋 Processus de commande clair ?", ["Oui", "Partiel", "Non"],
+                                      index=["Oui", "Partiel", "Non"].index(fiche_existante["Processus commande"]) if fiche_existante else 0)
+    transport = st.selectbox("🚚 Qui gère le transport ?", ["MKP", "Fournisseur"],
+                             index=["MKP", "Fournisseur"].index(fiche_existante["Transport"]) if fiche_existante else 0)
+    tracking = st.selectbox("📦 Tracking fourni ?", ["Oui", "Non"],
+                            index=["Oui", "Non"].index(fiche_existante["Tracking"]) if fiche_existante else 0)
+    poids_volume = st.selectbox("📏 Poids/volume communiqués ?", ["Oui", "Non"],
+                                index=["Oui", "Non"].index(fiche_existante["Poids/volume"]) if fiche_existante else 0)
+    statut_final = st.selectbox("📌 Statut final", ["✅", "⚠️", "❌"],
+                                index=["✅", "⚠️", "❌"].index(fiche_existante["Statut final"]) if fiche_existante else 0)
+    commentaire = st.text_area("📝 Commentaire",
+                               value=fiche_existante.get("Commentaire", "") if fiche_existante else "")
 
-    # Le même ratio de colonnes
-    col_widths = [2, 4, 4]
+    if st.button("📂 Enregistrer"):
+        nouvelle_fiche = {
+            "Fournisseur": fournisseur,
+            "Contact": contact,
+            "Pays": pays,
+            "Stock réel": stock_identifiable,
+            "Xdock": xdock_present,
+            "Délai stock": delai_stock,
+            "Délai xdock": delai_xdock,
+            "Processus commande": processus_commande,
+            "Transport": transport,
+            "Tracking": tracking,
+            "Poids/volume": poids_volume,
+            "Statut final": statut_final,
+            "Commentaire": commentaire
+        }
 
-    # Tout dans un seul form pour garantir l’alignement
-    with st.form("form_qualif", clear_on_submit=False):
-        # — En-tête
-        h1, h2, h3 = st.columns(col_widths)
-        h1.markdown("**Champ**")
-        h2.markdown("**Réponse**")
-        h3.markdown("**Commentaire**")
-
-        # — Chaque ligne
-        for label, typ, options in champs:
-            # Pré-remplissage
-            val = fiche.get(label, "")
-            com = fiche.get(f"{label}__com", "")
-
-            c1, c2, c3 = st.columns(col_widths)
-            c1.write(label)
-
-            key = label.replace(" ", "_")
-            # Widget réponse
-            if typ == "text":
-                fiche[label] = c2.text_input("", val, key=key)
-            elif typ == "number":
-                fiche[label] = c2.number_input("", value=(val or 0), min_value=0, key=key)
-            elif typ == "number_static":
-                c2.number_input("", value=(val or 0), disabled=True, key=f"{key}_stat")
-            elif typ == "select":
-                fiche[label] = c2.selectbox("", options, index=options.index(val) if val in options else 0, key=key)
-            elif typ == "textarea":
-                fiche[label] = c2.text_area("", val, height=80, key=key)
-
-            # Widget commentaire
-            fiche[f"{label}__com"] = c3.text_area("", com, height=80, key=f"{key}_com")
-
-        # — Bouton unique
-        submitted = st.form_submit_button("🔖 Enregistrer la fiche")
-
-    if submitted:
-        # On remplace la fiche et on sauve
         st.session_state.qualifications = [
-            q for q in st.session_state.qualifications
-            if clean(q["Fournisseur"]) != clean(fournisseur)
+            f for f in st.session_state.qualifications if clean(f.get("Fournisseur")) != clean(fournisseur)
         ]
-        st.session_state.qualifications.append(fiche)
+
+        st.session_state.qualifications.append(nouvelle_fiche)
         sauvegarder_qualifications(st.session_state.qualifications)
-        st.success("✅ Fiche enregistrée !")
+
+        st.success("✅ Données sauvegardées.")
+        st.write("📁 Aperçu du fichier qualifications.json :")
+        st.json(st.session_state.qualifications)
+
         st.session_state.page = "fournisseurs"
-        st.experimental_rerun()
+        st.rerun()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 🔀 Navigation principale selon la page
-# ─────────────────────────────────────────────────────────────────────────────
 if st.session_state.page == "home":
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📂 Accéder aux fournisseurs"):
+        if st.button("📂️ Accéder aux fournisseurs"):
             st.session_state.page = "fournisseurs"
             st.rerun()
     with col2:
@@ -246,4 +195,3 @@ elif st.session_state.page == "fournisseurs":
     afficher_dashboard_fournisseurs()
 elif st.session_state.page == "qualification":
     afficher_fiche_qualification()
-
