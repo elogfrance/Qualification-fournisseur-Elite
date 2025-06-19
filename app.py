@@ -78,7 +78,7 @@ def afficher_form_qualification(fournisseur):
     cond = st.selectbox("Condition de paiement", ["A la commande","A expédition","X jours"], index=["A la commande","A expédition","X jours"].index(exist.get("Condition de paiement","A la commande")) if exist else 0)
     poids = st.selectbox("Poids/volume ?", ["Oui","Non"], index=["Oui","Non"].index(exist.get("Poids/volume","Oui")) if exist else 0)
     statuts = ["Qualifié","Non qualifiés","En cours","Non éligible à l'Elite"]
-    statut = st.selectbox("Statut final", statuts, index=statuts.index(exist.get("Statut final",statuts[0])) if exist else 0)
+    statut = st.selectbox("Statut final", statuts, index=statuts.index(exist.get("Statut final",statuts[0])) if exist else 0)
     comment = st.text_area("Commentaire", value=exist.get("Commentaire","") if exist else "")
     if st.button("Enregistrer Qualification", key=f"save_{fournisseur}"):
         nouvelle = {"Fournisseur": fournisseur, "Contact": contact, "Pays": pays,
