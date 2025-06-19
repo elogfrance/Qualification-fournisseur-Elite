@@ -199,11 +199,20 @@ def afficher_dashboard_qualifications():
     # Statut par défaut pour non-qualifiés
     df["Statut final"] = df["Statut final"].fillna("Non qualifiés")
 
-    # Répartition par statut
-    st.subheader("Répartition des fournisseurs par statut")
-    stats = df["Statut final"].value_counts().rename_axis("Statut").reset_index(name="Nombre")
-    fig = px.bar(stats, x="Statut", y="Nombre", color="Statut", title="Répartition des statuts")
-    st.plotly_chart(fig, use_container_width=True)
+   # Nouveau code (camembert)
+stats = df["Statut final"] \
+    .value_counts() \
+    .rename_axis("Statut") \
+    .reset_index(name="Nombre")
+
+fig = px.pie(
+    stats,
+    names="Statut",
+    values="Nombre",
+    title="Répartition des statuts (camembert)",
+    hole=0  # 0 pour un camembert plein, >0 pour un donut
+)
+st.plotly_chart(fig, use_container_width=True)
 
     # Filtres supplémentaires
     st.sidebar.header("Filtres qualifications")
