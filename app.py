@@ -189,20 +189,7 @@ def afficher_fiche_qualification():
         st.rerun()
 
 # --- Page: Dashboard Qualifs ---
-def afficher_dashboard_qualifications():
-    st.header("📈 Dashboard des qualifications")
-    # Charger liste des fournisseurs (tout) et leurs qualifications
-    df_fourn = st.session_state.fournisseurs_df.copy()
-    df_qual = pd.DataFrame(charger_qualifications()) if st.session_state.qualifications else pd.DataFrame(columns=["Fournisseur", "Statut final"])
-    # Merge pour inclure tous les fournisseurs
-    df = df_fourn.merge(df_qual, on="Fournisseur", how="left")
-    # Statut par défaut pour non-qualifiés
-    df["Statut final"] = df["Statut final"].fillna("Non qualifiés")
 
-   def afficher_dashboard_qualifications():
-    st.header("📈 Dashboard des qualifications")
-
-    # Charger fournisseurs + qualifications
 def afficher_dashboard_qualifications():
     st.header("📈 Dashboard des qualifications")
 
