@@ -113,7 +113,7 @@ def afficher_dashboard_fournisseurs():
         st.info("📥 Veuillez importer un fichier pour voir le tableau.")
 
 def afficher_fiche_qualification():
-    …
+
 
 
 if st.session_state.page == "home":
