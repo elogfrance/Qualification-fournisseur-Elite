@@ -26,11 +26,9 @@ def sauvegarder_qualifications(data):
 
 # 🧠 Charger les fournisseurs depuis le JSON (dernier import)
 def charger_fournisseurs():
-    # Si le fichier courant n'existe pas, tenter une migration depuis l'ancien
     os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
     if not os.path.exists(FOURN_JSON_PATH) and os.path.exists(OLD_FOURN_JSON_PATH):
         shutil.copy(OLD_FOURN_JSON_PATH, FOURN_JSON_PATH)
-
     if os.path.exists(FOURN_JSON_PATH):
         return pd.read_json(FOURN_JSON_PATH)
     return None
@@ -86,6 +84,7 @@ def afficher_dashboard_fournisseurs():
 
     if fichier:
         try:
+            # Lecture et renommage des colonnes
             df = pd.read_excel(fichier, skiprows=2)
             df = df.rename(columns={
                 df.columns[0]: "Fournisseur",
@@ -93,6 +92,10 @@ def afficher_dashboard_fournisseurs():
                 df.columns[2]: "Délai moyen (jours)"
             })
 
+            # Conversion en numérique pour éviter les erreurs de type
+            df["Délai moyen (jours)"] = pd.to_numeric(df["Délai moyen (jours)"], errors='coerce')
+
+            # Calcul du niveau d'urgence
             def urgence(delai):
                 if pd.isna(delai):
                     return ""
@@ -105,6 +108,7 @@ def afficher_dashboard_fournisseurs():
 
             df["Niveau d'urgence"] = df["Délai moyen (jours)"].apply(urgence)
 
+            # Statut depuis les qualifications existantes
             def statut_depuis_qualifications(nom_frs):
                 for fiche in st.session_state.qualifications:
                     if clean(fiche["Fournisseur"]) == clean(nom_frs):
@@ -122,6 +126,7 @@ def afficher_dashboard_fournisseurs():
         except Exception as e:
             st.error(f"Erreur lors de l’import du fichier : {e}")
 
+    # Affichage du tableau si chargé
     if "fournisseurs_df" in st.session_state:
         df = st.session_state.fournisseurs_df
         st.markdown("### Liste des fournisseurs à qualifier")
@@ -184,77 +189,4 @@ def afficher_fiche_qualification():
     )
     processus_commande = st.selectbox(
         "📋 Processus de commande clair ?", ["Oui", "Partiel", "Non"],
-        index=["Oui", "Partiel", "Non"].index(fiche_existante.get("Processus commande", "Oui"))
-        if fiche_existante else 0
-    )
-    transport = st.selectbox(
-        "🚚 Qui gère le transport ?", ["MKP", "Fournisseur"],
-        index=["MKP", "Fournisseur"].index(fiche_existante.get("Transport", "MKP"))
-        if fiche_existante else 0
-    )
-    tracking = st.selectbox(
-        "📦 Tracking fourni ?", ["Oui", "Non"],
-        index=["Oui", "Non"].index(fiche_existante.get("Tracking", "Non"))
-        if fiche_existante else 0
-    )
-    poids_volume = st.selectbox(
-        "📏 Poids/volume communiqués ?", ["Oui", "Non"],
-        index=["Oui", "Non"].index(fiche_existante.get("Poids/volume", "Oui"))
-        if fiche_existante else 0
-    )
-    statut_final = st.selectbox(
-        "📌 Statut final", ["✅", "⚠️", "❌"],
-        index=["✅", "⚠️", "❌"].index(fiche_existante.get("Statut final", "✅"))
-        if fiche_existante else 0
-    )
-    commentaire = st.text_area(
-        "📝 Commentaire",
-        value=fiche_existante.get("Commentaire", "") if fiche_existante else ""
-    )
-
-    if st.button("📂 Enregistrer"):
-        nouvelle_fiche = {
-            "Fournisseur": fournisseur,
-            "Contact": contact,
-            "Pays": pays,
-            "Stock réel": stock_identifiable,
-            "Xdock": xdock_present,
-            "Délai stock": delai_stock,
-            "Délai xdock": delai_xdock,
-            "Processus commande": processus_commande,
-            "Transport": transport,
-            "Tracking": tracking,
-            "Poids/volume": poids_volume,
-            "Statut final": statut_final,
-            "Commentaire": commentaire
-        }
-
-        # Remplacement ou ajout dans la session
-        st.session_state.qualifications = [
-            f for f in st.session_state.qualifications
-            if clean(f["Fournisseur"]) != clean(fournisseur)
-        ]
-        st.session_state.qualifications.append(nouvelle_fiche)
-        sauvegarder_qualifications(st.session_state.qualifications)
-
-        st.success("✅ Données sauvegardées.")
-        st.write("📁 Aperçu du fichier qualifications.json :")
-        st.json(st.session_state.qualifications)
-
-        st.session_state.page = "fournisseurs"
-        st.rerun()
-
-# -- Navigation générale --
-if st.session_state.page == "home":
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📂️ Accéder aux fournisseurs"):
-            st.session_state.page = "fournisseurs"
-            st.rerun()
-    with col2:
-        if st.button("📘 Aide & méthode"):
-            st.info("Méthode en cours de rédaction.")
-elif st.session_state.page == "fournisseurs":
-    afficher_dashboard_fournisseurs()
-elif st.session_state.page == "qualification":
-    afficher_fiche_qualification()
+        index=["Oui", "Partiel", "Non"].index(fiche_exist### truncated due to length###
