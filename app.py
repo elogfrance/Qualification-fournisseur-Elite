@@ -67,6 +67,8 @@ def main():
         if st.button("🗂️ Accéder aux fournisseurs"):
             st.session_state.page = "fournisseurs"
             st.rerun()
-    with col2:
-        if st.button("📘 Aide & méthode"):
-            st.session_state.page = "a_
+   with col2:
+    if st.button("📘 Aide & méthode"):
+        st.session_state.page = "aide"
+        st.rerun()
+
