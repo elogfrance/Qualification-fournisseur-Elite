@@ -200,12 +200,12 @@ def afficher_dashboard_qualifications():
     df["Statut final"] = df["Statut final"].fillna("Non qualifiés")
 
    # Nouveau code (camembert)
-stats = df["Statut final"] \
+    stats = df["Statut final"] \
     .value_counts() \
     .rename_axis("Statut") \
     .reset_index(name="Nombre")
 
-fig = px.pie(
+    fig = px.pie(
     stats,
     names="Statut",
     values="Nombre",
