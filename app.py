@@ -44,7 +44,7 @@ st.set_page_config(
     layout="centered"
 )
 
-st.image("assets/logo_marketparts.png", width=200)
+st.image("assets/logo_marketparts.png", width=400)
 
 st.title("Projet : Qualification Fournisseur Express")
 
@@ -197,5 +197,4 @@ if st.session_state.page == "home":
             st.info("Méthode en cours de rédaction.")
 elif st.session_state.page == "fournisseurs":
     afficher_dashboard_fournisseurs()
-elif st.session_state.page == "qualification":
-    afficher_fiche_qualification()
+
