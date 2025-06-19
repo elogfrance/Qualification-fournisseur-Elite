@@ -113,74 +113,8 @@ def afficher_dashboard_fournisseurs():
         st.info("📥 Veuillez importer un fichier pour voir le tableau.")
 
 def afficher_fiche_qualification():
-    fournisseur = st.session_state.get("fournisseur_en_cours")
-    if not fournisseur:
-        st.warning("Aucun fournisseur sélectionné.")
-        return
+    …
 
-    fiche_existante = next(
-        (
-            f for f in st.session_state.qualifications
-            if clean(f.get("Fournisseur")) == clean(fournisseur)
-        ),
-        None
-    )
-
-    st.title(f"📝 Qualification : {fournisseur}")
-
-    contact = st.text_input("👤 Contact principal", value=fiche_existante.get("Contact") if fiche_existante else "")
-    pays = st.text_input("🌍 Pays", value=fiche_existante.get("Pays") if fiche_existante else "")
-    stock_identifiable = st.selectbox("📦 Stock réel identifiable ?", ["Oui", "Non"],
-                                      index=["Oui", "Non"].index(fiche_existante["Stock réel"]) if fiche_existante else 0)
-    xdock_present = st.selectbox("🔁 Présence de xdock ?", ["Oui", "Non"],
-                                 index=["Oui", "Non"].index(fiche_existante["Xdock"]) if fiche_existante else 0)
-    delai_stock = st.number_input("⏱️ Délai annoncé (stock)", min_value=0,
-                                  value=fiche_existante.get("Délai stock", 0) if fiche_existante else 0)
-    delai_xdock = st.number_input("⏱️ Délai annoncé (xdock)", min_value=0,
-                                  value=fiche_existante.get("Délai xdock", 0) if fiche_existante else 0)
-    processus_commande = st.selectbox("📋 Processus de commande clair ?", ["Oui", "Partiel", "Non"],
-                                      index=["Oui", "Partiel", "Non"].index(fiche_existante["Processus commande"]) if fiche_existante else 0)
-    transport = st.selectbox("🚚 Qui gère le transport ?", ["MKP", "Fournisseur"],
-                             index=["MKP", "Fournisseur"].index(fiche_existante["Transport"]) if fiche_existante else 0)
-    tracking = st.selectbox("📦 Tracking fourni ?", ["Oui", "Non"],
-                            index=["Oui", "Non"].index(fiche_existante["Tracking"]) if fiche_existante else 0)
-    poids_volume = st.selectbox("📏 Poids/volume communiqués ?", ["Oui", "Non"],
-                                index=["Oui", "Non"].index(fiche_existante["Poids/volume"]) if fiche_existante else 0)
-    statut_final = st.selectbox("📌 Statut final", ["✅", "⚠️", "❌"],
-                                index=["✅", "⚠️", "❌"].index(fiche_existante["Statut final"]) if fiche_existante else 0)
-    commentaire = st.text_area("📝 Commentaire",
-                               value=fiche_existante.get("Commentaire", "") if fiche_existante else "")
-
-    if st.button("📂 Enregistrer"):
-        nouvelle_fiche = {
-            "Fournisseur": fournisseur,
-            "Contact": contact,
-            "Pays": pays,
-            "Stock réel": stock_identifiable,
-            "Xdock": xdock_present,
-            "Délai stock": delai_stock,
-            "Délai xdock": delai_xdock,
-            "Processus commande": processus_commande,
-            "Transport": transport,
-            "Tracking": tracking,
-            "Poids/volume": poids_volume,
-            "Statut final": statut_final,
-            "Commentaire": commentaire
-        }
-
-        st.session_state.qualifications = [
-            f for f in st.session_state.qualifications if clean(f.get("Fournisseur")) != clean(fournisseur)
-        ]
-
-        st.session_state.qualifications.append(nouvelle_fiche)
-        sauvegarder_qualifications(st.session_state.qualifications)
-
-        st.success("✅ Données sauvegardées.")
-        st.write("📁 Aperçu du fichier qualifications.json :")
-        st.json(st.session_state.qualifications)
-
-        st.session_state.page = "fournisseurs"
-        st.rerun()
 
 if st.session_state.page == "home":
     col1, col2 = st.columns(2)
