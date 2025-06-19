@@ -26,6 +26,9 @@ if "page" not in st.session_state:
 if "qualifications" not in st.session_state:
     st.session_state.qualifications = []
 
+def clean(nom):
+    return str(nom).strip().lower()
+
 def afficher_dashboard_fournisseurs():
     st.title("\U0001F4CA Dashboard des fournisseurs")
     fichier = st.file_uploader("\U0001F4C1 Importer le fichier Excel de suivi des délais", type=["xlsx"])
@@ -53,7 +56,7 @@ def afficher_dashboard_fournisseurs():
 
             def statut_depuis_qualifications(nom_frs):
                 for fiche in st.session_state.qualifications:
-                    if fiche["Fournisseur"] == nom_frs:
+                    if clean(fiche["Fournisseur"]) == clean(nom_frs):
                         return fiche["Statut final"]
                 return "\u23F3 À traiter"
 
@@ -91,7 +94,7 @@ def afficher_fiche_qualification():
         st.warning("Aucun fournisseur sélectionné.")
         return
 
-    fiche_existante = next((fiche for fiche in st.session_state.qualifications if fiche["Fournisseur"] == fournisseur), None)
+    fiche_existante = next((fiche for fiche in st.session_state.qualifications if clean(fiche["Fournisseur"]) == clean(fournisseur)), None)
 
     st.title(f"\U0001F4DD Qualification : {fournisseur}")
 
@@ -135,8 +138,9 @@ def afficher_fiche_qualification():
             "Commentaire": commentaire
         }
 
-        # Remplacer ou ajouter
-        st.session_state.qualifications = [f for f in st.session_state.qualifications if f["Fournisseur"] != fournisseur]
+        st.session_state.qualifications = [
+            f for f in st.session_state.qualifications if clean(f["Fournisseur"]) != clean(fournisseur)
+        ]
         st.session_state.qualifications.append(nouvelle_fiche)
         st.success("✅ Fiche enregistrée.")
         st.session_state.page = "fournisseurs"
