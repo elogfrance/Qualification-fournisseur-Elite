@@ -214,11 +214,27 @@ def afficher_dashboard_qualifications():
     )
     st.plotly_chart(fig, use_container_width=True)
 
-   # Tableau synthèse
+   # Filtres supplémentaires
+    st.sidebar.header("Filtres qualifications")
+    fournisseurs = df["Fournisseur"].tolist()
+    sel_fourn = st.sidebar.multiselect(
+        "Fournisseurs", fournisseurs, default=fournisseurs, key="dash_fourn"
+    )
+    num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+    sel_cols = st.sidebar.multiselect(
+        "Critères numériques", num_cols, default=num_cols, key="dash_cols"
+    )
+
+    df_sel = df[df["Fournisseur"].isin(sel_fourn)]
+
+    # Tableau synthèse
     st.subheader("Tableau synthèse")
-    # Inclure le statut de qualification (renommé 'Statut') dans le tableau
+    # Renommer la colonne 'Statut final' en 'Statut' pour l'affichage
+    if "Statut final" in df_sel.columns:
+        df_sel = df_sel.rename(columns={"Statut final": "Statut"})
+    # Construire les colonnes à afficher : Fournisseur, Statut, puis critères sélectionnés
     display_cols = ["Fournisseur", "Statut"] + sel_cols
-    st.dataframe(df_sel[display_cols])(df_sel[display_cols])
+    st.dataframe(df_sel[display_cols])
 
     if sel_cols:
         moy = df_sel.groupby("Fournisseur")[sel_cols].mean().reset_index()
@@ -228,8 +244,6 @@ def afficher_dashboard_qualifications():
             title="Notes Moyennes par Fournisseur"
         )
         st.plotly_chart(fig2, use_container_width=True)
-
-
 # --- Routage des pages ---
 if st.session_state.page == "home":
     col1, col2, col3 = st.columns(3)
