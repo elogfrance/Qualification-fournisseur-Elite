@@ -1,14 +1,21 @@
 import streamlit as st
 import pandas as pd
 
-# Configuration de la page
+# Configuration initiale de la page
 st.set_page_config(
     page_title="Qualification Fournisseur Express",
     page_icon="📦",
     layout="centered"
 )
 
-# --- Fonctions ---
+# Initialisation de l’état de session
+if "page" not in st.session_state:
+    st.session_state.page = "home"
+
+if "qualifications" not in st.session_state:
+    st.session_state.qualifications = []
+
+# --- FONCTIONS ---
 
 def afficher_dashboard_fournisseurs():
     st.title("📊 Dashboard des fournisseurs")
@@ -37,23 +44,32 @@ def afficher_dashboard_fournisseurs():
             df["Niveau d'urgence"] = df["Délai moyen (jours)"].apply(urgence)
             df["Statut qualification"] = "⏳ À traiter"
 
-            st.markdown("### Liste des fournisseurs à qualifier")
-            for index, row in df.iterrows():
-                with st.expander(f"➡️ {row['Fournisseur']}"):
-                    col1, col2, col3 = st.columns([2, 2, 2])
-                    col1.metric("📦 Commandes", row["Nb Commandes"])
-                    col2.metric("⏱️ Délai moyen", f"{row['Délai moyen (jours)']} j")
-                    col3.metric("🚨 Urgence", row["Niveau d'urgence"])
-
-                    st.write("🗂️ **Statut actuel** :", row["Statut qualification"])
-
-                    if st.button("📝 Ouvrir la grille de qualification", key=f"qualif_{index}"):
-                        st.session_state.fournisseur_en_cours = row["Fournisseur"]
-                        st.session_state.page = "qualification"
-                        st.rerun()
+            st.session_state.fournisseurs_df = df.copy()
+            st.success("✅ Liste de fournisseurs enregistrée dans l’application.")
 
         except Exception as e:
-            st.error(f"Erreur de traitement : {e}")
+            st.error(f"Erreur lors de l’import du fichier : {e}")
+
+    if "fournisseurs_df" in st.session_state:
+        df = st.session_state.fournisseurs_df
+        st.markdown("### Liste des fournisseurs à qualifier")
+
+        for index, row in df.iterrows():
+            with st.expander(f"➡️ {row['Fournisseur']}"):
+                col1, col2, col3 = st.columns([2, 2, 2])
+                col1.metric("📦 Commandes", row["Nb Commandes"])
+                col2.metric("⏱️ Délai moyen", f"{row['Délai moyen (jours)']} j")
+                col3.metric("🚨 Urgence", row["Niveau d'urgence"])
+
+                st.write("🗂️ **Statut actuel** :", row["Statut qualification"])
+
+                if st.button("📝 Ouvrir la grille de qualification", key=f"qualif_{index}"):
+                    st.session_state.fournisseur_en_cours = row["Fournisseur"]
+                    st.session_state.page = "qualification"
+                    st.rerun()
+    else:
+        st.info("📥 Veuillez importer un fichier Excel pour commencer.")
+
 
 def afficher_fiche_qualification():
     st.title("📋 Fiche de qualification fournisseur")
@@ -81,17 +97,35 @@ def afficher_fiche_qualification():
     commentaire = st.text_area("📝 Commentaire")
 
     if st.button("💾 Enregistrer la qualification"):
-        st.success("✅ Données enregistrées (non encore exportées)")
+        nouvelle_fiche = {
+            "Fournisseur": fournisseur,
+            "Contact": contact,
+            "Pays": pays,
+            "Stock réel": stock_identifiable,
+            "Xdock": xdock_present,
+            "Délai stock": delai_stock,
+            "Délai xdock": delai_xdock,
+            "Processus commande": processus_commande,
+            "Transport": transport,
+            "Tracking": tracking,
+            "Poids/volume": poids_volume,
+            "Statut final": statut_final,
+            "Commentaire": commentaire
+        }
+
+        st.session_state.qualifications = [
+            fiche for fiche in st.session_state.qualifications
+            if fiche["Fournisseur"] != fournisseur
+        ]
+        st.session_state.qualifications.append(nouvelle_fiche)
+        st.success("✅ Fiche enregistrée avec succès !")
 
     if st.button("⬅️ Retour au dashboard"):
         st.session_state.page = "dashboard"
         st.rerun()
 
 
-# --- Logique de navigation ---
-
-if "page" not in st.session_state:
-    st.session_state.page = "home"
+# --- ROUTEUR PRINCIPAL ---
 
 if st.session_state.page == "home":
     st.image("assets/logo_marketparts.png", width=200)
