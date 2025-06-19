@@ -178,51 +178,57 @@ def afficher_fiche_qualification():
         ("Commentaire global",            "textarea")
     ]
 
-    with st.form("form_qualification", clear_on_submit=False):
+    # Formulaire unique pour la grille
+    with st.form(key="form_qualification", clear_on_submit=False):
         # En-tête du tableau
-        col1, col2, col3 = st.columns([2, 4, 4])
-        col1.markdown("**Champ**")
-        col2.markdown("**Réponse**")
-        col3.markdown("**Commentaire**")
-        st.markdown("")  # petit espacement
+        c0, c1, c2 = st.columns([2, 4, 4])
+        c0.markdown("**Champ**")
+        c1.markdown("**Réponse**")
+        c2.markdown("**Commentaire**")
+        st.markdown("")  # espacement
 
-        # Boucle de création des lignes
+        # Lignes du tableau
         for label, typ, *opts in champs:
             key = label.replace(" ", "_")
             val = fiche.get(label, "")
             com = fiche.get(f"{label}__com", "")
 
-            c1, c2, c3 = st.columns([2,4,4])
-            c1.write(label)
+            col_lbl, col_inp, col_com = st.columns([2, 4, 4])
+            col_lbl.write(label)
 
-            # réponse
+            # Widget adapté
             if typ == "text":
-                fiche[label] = c2.text_input("", val, key=key)
+                fiche[label] = col_inp.text_input("", val, key=key)
             elif typ == "number":
-                fiche[label] = c2.number_input("", value=val if isinstance(val, (int,float)) else 0, min_value=0, key=key)
+                fiche[label] = col_inp.number_input("", value=val if isinstance(val, (int, float)) else 0,
+                                                     min_value=0, key=key)
             elif typ == "number_static":
-                c2.number_input("", value=val if isinstance(val, (int,float)) else 0, disabled=True, key=f"{key}_stat")
+                col_inp.number_input("", value=val if isinstance(val, (int, float)) else 0,
+                                     disabled=True, key=f"{key}_stat")
             elif typ == "select":
-                fiche[label] = c2.selectbox("", options=opts[0], index=opts[0].index(val) if val in opts[0] else 0, key=key)
+                fiche[label] = col_inp.selectbox("", opts[0],
+                                                 index=opts[0].index(val) if val in opts[0] else 0,
+                                                 key=key)
             elif typ == "textarea":
-                fiche[label] = c2.text_area("", val, key=key, height=50)
+                fiche[label] = col_inp.text_area("", val, height=80, key=key)
 
-            # commentaire
-            fiche[f"{label}__com"] = c3.text_area("", com, key=f"{key}_com", height=50)
+            # Commentaire libre
+            fiche[f"{label}__com"] = col_com.text_area("", com, height=80, key=f"{key}_com")
 
-        # bouton submit
+        # Bouton de submit
         submitted = st.form_submit_button("🔖 Enregistrer la fiche")
-        if submitted:
-            # remplace l’ancienne fiche
-            st.session_state.qualifications = [
-                q for q in st.session_state.qualifications
-                if clean(q["Fournisseur"]) != clean(fournisseur)
-            ]
-            st.session_state.qualifications.append(fiche)
-            sauvegarder_qualifications(st.session_state.qualifications)
-            st.success("✅ Fiche enregistrée !")
-            st.session_state.page = "fournisseurs"
-            st.experimental_rerun()
+
+    if submitted:
+        # Remplace l’ancienne fiche par la nouvelle
+        st.session_state.qualifications = [
+            q for q in st.session_state.qualifications
+            if clean(q["Fournisseur"]) != clean(fournisseur)
+        ]
+        st.session_state.qualifications.append(fiche)
+        sauvegarder_qualifications(st.session_state.qualifications)
+        st.success("✅ Fiche enregistrée !")
+        st.session_state.page = "fournisseurs"
+        st.experimental_rerun()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
