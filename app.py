@@ -183,8 +183,7 @@ def afficher_fiche_qualification():
         st.write("📁 Aperçu du fichier qualifications.json :")
         st.json(st.session_state.qualifications)
 
+       # Retour au tableau des fournisseurs
         st.session_state.page = "fournisseurs"
         st.rerun()
-        elif st.session_state.page == "qualification":
-    afficher_fiche_qualification()
 
