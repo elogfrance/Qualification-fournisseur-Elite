@@ -157,7 +157,7 @@ def afficher_fiche_qualification():
     )
     statut_final = st.selectbox(
         "📌 Statut final", ["Non qualifiés", "Qualifié", "En cours", "Non éligible à l'Elite""],
-        index=[""Non qualifiés", "Qualifié", "En cours", "Non éligible à l'Elite""].index(fiche_existante.get("Statut final", " ")) if fiche_existante else 0
+        index=[""Non qualifiés", "Qualifié", "En cours", "Non éligible à l'Elite"].index(fiche_existante.get("Statut final", " ")) if fiche_existante else 0
     )
     commentaire = st.text_area("📝 Commentaire", value=fiche_existante.get("Commentaire", "") if fiche_existante else "")
 
