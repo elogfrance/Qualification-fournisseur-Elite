@@ -64,8 +64,9 @@ def clean(nom):
 
 def afficher_dashboard_fournisseurs():
     st.title("📊 Tableau des fournisseurs à qualifier")
-    fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
 
+    # Upload du fichier de commandes et traitement (inchangé)
+    fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
     if fichier:
         try:
             df = pd.read_excel(fichier)
@@ -74,49 +75,48 @@ def afficher_dashboard_fournisseurs():
                 "Date ARC fournisseur reçu": "Date ARC",
                 "Date ready for pickup": "Date Ready"
             })
-
-            df["Date ARC"] = pd.to_datetime(df["Date ARC"], errors="coerce")
+            df["Date ARC"]   = pd.to_datetime(df["Date ARC"], errors="coerce")
             df["Date Ready"] = pd.to_datetime(df["Date Ready"], errors="coerce")
             df = df.dropna(subset=["Date ARC", "Date Ready", "Fournisseur"])
-
             df["Délai (jours)"] = (df["Date Ready"] - df["Date ARC"]).dt.days
             df["Délai (jours)"] = pd.to_numeric(df["Délai (jours)"], errors="coerce")
 
             result = df.groupby("Fournisseur").agg(
                 Nombre_commandes=("Fournisseur", "count"),
                 Délai_moyen=("Délai (jours)", lambda x: round(x.dropna().mean(), 1))
-            ).reset_index()
-
-            result = result.sort_values(by="Nombre_commandes", ascending=False)
+            ).reset_index().sort_values("Nombre_commandes", ascending=False)
 
             sauvegarder_fournisseurs(result)
             st.session_state.fournisseurs_df = result
-
             st.success("✅ Données importées et sauvegardées.")
         except Exception as e:
             st.error(f"Erreur pendant le traitement du fichier : {e}")
 
+    # Affichage de la liste mémoire
     if not st.session_state.fournisseurs_df.empty:
         st.markdown("### Données fournisseurs en mémoire")
 
-        for index, row in st.session_state.fournisseurs_df.iterrows():
-            with st.expander(f"➡️ {row['Fournisseur']}"):
-                col1, col2 = st.columns(2)
-                col1.metric("📦 Commandes", row["Nombre_commandes"])
-                col2.metric("⏱️ Délai moyen", f"{row['Délai_moyen']} j")
+        for idx, row in st.session_state.fournisseurs_df.iterrows():
+            fournisseur = row["Fournisseur"]
+            nb_commandes  = int(row["Nombre_commandes"])
+            délai_moyen    = row["Délai_moyen"]
 
-                if st.button("📝 Accéder à la qualification", key=f"btn_qualif_{index}"):
-                    st.session_state.fournisseur_en_cours = row["Fournisseur"]
-                    st.session_state.page = "qualification"
-                    st.rerun()
+            # Calcul du nombre de traitements déjà réalisés pour ce fournisseur
+            nb_traitements = sum(
+                1 for f in st.session_state.qualifications
+                if clean(f.get("Fournisseur")) == clean(fournisseur)
+            )
+
+            # Trois colonnes : nom+infos, délai, bouton
+            col1, col2, col3 = st.columns([4, 2, 2])
+            col1.markdown(f"**{fournisseur}**  \n• Traitements : {nb_traitements}  \n• Commandes : {nb_commandes}")
+            col2.metric("⏱️ Délai moyen (j)", f"{délai_moyen}")
+            if col3.button("📝 Qualifier", key=f"btn_qualif_{idx}"):
+                st.session_state.fournisseur_en_cours = fournisseur
+                st.session_state.page = "qualification"
+                st.rerun()
     else:
         st.info("📥 Veuillez importer un fichier pour voir le tableau.")
-
-def afficher_fiche_qualification():
-    fournisseur = st.session_state.get("fournisseur_en_cours")
-    if not fournisseur:
-        st.warning("Aucun fournisseur sélectionné.")
-        return
 
     fiche_existante = next(
         (
