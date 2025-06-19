@@ -151,76 +151,79 @@ def afficher_fiche_qualification():
         st.warning("Aucun fournisseur sélectionné.")
         return
 
-    # Récupère la fiche existante ou initialise-en une nouvelle
+    # Récupère ou initialise la fiche
     fiche = next(
-        (q for q in st.session_state.qualifications if clean(q.get("Fournisseur")) == clean(fournisseur)),
+        (q for q in st.session_state.qualifications if clean(q["Fournisseur"]) == clean(fournisseur)),
         {"Fournisseur": fournisseur}
     )
-    st.title(f"📝 Qualification : {fournisseur}")
 
-    # Configuration des champs
+    st.title(f"📝 Qualification : {fournisseur}")
+    st.markdown("---")
+
+    # Définition des champs
     champs = [
-        {"label": "Fournisseur",                   "type": "text_static"},
-        {"label": "Contact principal",             "type": "text"},
-        {"label": "Pays",                          "type": "text"},
-        {"label": "Nb de commandes MKP",           "type": "number_static"},
-        {"label": "Délai moyen observé",           "type": "number_static"},
-        {"label": "Stock réel identifiable ?",     "type": "select", "options": ["Oui", "Non"]},
-        {"label": "Présence de xdock ?",           "type": "select", "options": ["Oui", "Non"]},
-        {"label": "Délai annoncé en stock",        "type": "number"},
-        {"label": "Délai annoncé xdock",           "type": "number"},
-        {"label": "Processus de commande clair ?", "type": "select", "options": ["Oui", "Partiel", "Non"]},
-        {"label": "Qui gère le transport ?",       "type": "select", "options": ["MKP", "Fournisseur"]},
-        {"label": "Tracking fourni ?",             "type": "select", "options": ["Oui", "Non"]},
-        {"label": "Poids/volume communiqués ?",    "type": "select", "options": ["Oui", "Non"]},
-        {"label": "✅ Statut final",                "type": "select", "options": ["Eligible", "En cours", "Non eligible"]},
-        {"label": "Commentaire global",            "type": "textarea"}
+        ("Contact principal",       "text"),
+        ("Pays",                    "text"),
+        ("Nb de commandes MKP",     "number_static"),
+        ("Délai moyen observé",     "number_static"),
+        ("Stock réel identifiable ?", "select", ["Oui", "Non"]),
+        ("Présence de xdock ?",       "select", ["Oui", "Non"]),
+        ("Délai annoncé en stock",    "number"),
+        ("Délai annoncé xdock",       "number"),
+        ("Processus de commande clair ?", "select", ["Oui", "Partiel", "Non"]),
+        ("Qui gère le transport ?",       "select", ["MKP", "Fournisseur"]),
+        ("Tracking fourni ?",             "select", ["Oui", "Non"]),
+        ("Poids/volume communiqués ?",    "select", ["Oui", "Non"]),
+        ("✅ Statut final",                "select", ["Eligible", "En cours", "Non eligible"]),
+        ("Commentaire global",            "textarea")
     ]
 
-    # Affichage en trois colonnes
-    for champ in champs:
-        col1, col2, col3 = st.columns([3, 3, 4])
-        label = champ["label"]
-        col1.markdown(f"**{label}**")
+    with st.form("form_qualification", clear_on_submit=False):
+        # En-tête du tableau
+        col1, col2, col3 = st.columns([2, 4, 4])
+        col1.markdown("**Champ**")
+        col2.markdown("**Réponse**")
+        col3.markdown("**Commentaire**")
+        st.markdown("")  # petit espacement
 
-        # Clés et valeurs antérieures
-        key = label.replace(" ", "_")
-        val = fiche.get(label, "")
-        com = fiche.get(f"{label}__com", "")
+        # Boucle de création des lignes
+        for label, typ, *opts in champs:
+            key = label.replace(" ", "_")
+            val = fiche.get(label, "")
+            com = fiche.get(f"{label}__com", "")
 
-        # Widget adapté
-        if champ["type"] == "text_static":
-            col2.text_input("", value=val, disabled=True, key=f"{key}_stat")
-        elif champ["type"] == "text":
-            fiche[label] = col2.text_input("", value=val, key=key)
-        elif champ["type"] == "number_static":
-            col2.number_input("", value=val if isinstance(val, (int, float)) else 0,
-                              disabled=True, key=f"{key}_stat")
-        elif champ["type"] == "number":
-            fiche[label] = col2.number_input("", value=val if isinstance(val, (int, float)) else 0,
-                                             min_value=0, key=key)
-        elif champ["type"] == "select":
-            options = champ["options"]
-            idx_opt = options.index(val) if val in options else 0
-            fiche[label] = col2.selectbox("", options, index=idx_opt, key=key)
-        elif champ["type"] == "textarea":
-            fiche[label] = col2.text_area("", value=val, key=key)
+            c1, c2, c3 = st.columns([2,4,4])
+            c1.write(label)
 
-        # Commentaire libre
-        fiche[f"{label}__com"] = col3.text_area("", value=com, key=f"{key}_com", height=80)
+            # réponse
+            if typ == "text":
+                fiche[label] = c2.text_input("", val, key=key)
+            elif typ == "number":
+                fiche[label] = c2.number_input("", value=val if isinstance(val, (int,float)) else 0, min_value=0, key=key)
+            elif typ == "number_static":
+                c2.number_input("", value=val if isinstance(val, (int,float)) else 0, disabled=True, key=f"{key}_stat")
+            elif typ == "select":
+                fiche[label] = c2.selectbox("", options=opts[0], index=opts[0].index(val) if val in opts[0] else 0, key=key)
+            elif typ == "textarea":
+                fiche[label] = c2.text_area("", val, key=key, height=50)
 
-    # Bouton d’enregistrement
-    if st.button("🔖 Enregistrer la fiche"):
-        # On remplace l’ancienne fiche par la nouvelle
-        st.session_state.qualifications = [
-            q for q in st.session_state.qualifications
-            if clean(q.get("Fournisseur")) != clean(fournisseur)
-        ]
-        st.session_state.qualifications.append(fiche)
-        sauvegarder_qualifications(st.session_state.qualifications)
-        st.success("✅ Fiche enregistrée !")
-        st.session_state.page = "fournisseurs"
-        st.rerun()
+            # commentaire
+            fiche[f"{label}__com"] = c3.text_area("", com, key=f"{key}_com", height=50)
+
+        # bouton submit
+        submitted = st.form_submit_button("🔖 Enregistrer la fiche")
+        if submitted:
+            # remplace l’ancienne fiche
+            st.session_state.qualifications = [
+                q for q in st.session_state.qualifications
+                if clean(q["Fournisseur"]) != clean(fournisseur)
+            ]
+            st.session_state.qualifications.append(fiche)
+            sauvegarder_qualifications(st.session_state.qualifications)
+            st.success("✅ Fiche enregistrée !")
+            st.session_state.page = "fournisseurs"
+            st.experimental_rerun()
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 🔀 Navigation principale selon la page
