@@ -144,7 +144,7 @@ def afficher_fiche_qualification():
                              index=["MKP", "Fournisseur"].index(fiche_existante["Transport"]) if fiche_existante else 0)
     tracking = st.selectbox("📦 Tracking fourni ?", ["Oui", "Non"],
                             index=["Oui", "Non"].index(fiche_existante["Tracking"]) if fiche_existante else 0)
-    condition_paiement = st.selectbox(" condition de paiement ?", ["Oui", "Non", " "],
+    Condition_paiement = st.selectbox(" condition de paiement ?", [" ", "Oui", "Non"],
                             index=["Oui", "Non", " "].index(fiche_existante["condition de paiement"]) if fiche_existante else 0)
     
     poids_volume = st.selectbox("📏 Poids/volume communiqués ?", ["Oui", "Non"],
