@@ -5,6 +5,16 @@ import os
 import shutil
 import plotly.express as px
 
+# ─── Navigation principale ───
+page = st.sidebar.selectbox(
+    "Menu",
+    ["Accueil", "Fournisseurs", "Qualification", "Dashboard Qualifs", "Aide"],
+    index=["Accueil", "Fournisseurs", "Qualification", "Dashboard Qualifs", "Aide"]
+          .index(st.session_state.get("page", "Accueil"))
+)
+st.session_state.page = page
+
+
 # --- Chemins des fichiers de données ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 QUAL_JSON_PATH = os.path.join(BASE_DIR, "data", "qualifications.json")
@@ -277,32 +287,16 @@ def afficher_dashboard_qualifications():
         st.plotly_chart(fig_radar, use_container_width=True)
 
 # --- Routage des pages ---
-if st.session_state.page == "home":
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("📂 Fournisseurs"):
-            st.session_state.page = "fournisseurs"
-            st.rerun()
-    with col2:
-        if st.button("📈 Dashboard Qualifs"):
-            st.session_state.page = "dashboard_qualifs"
-            st.rerun()
-    with col3:
-        if st.button("📘 Aide"):
-            st.session_state.page = "aide"
-            st.rerun()
-
-elif st.session_state.page == "fournisseurs":
+if page == "Accueil":
+    st.markdown("**Bienvenue !** Utilisez le menu à gauche…")
+elif page == "Fournisseurs":
     afficher_dashboard_fournisseurs()
-
-elif st.session_state.page == "qualification":
+elif page == "Qualification":
     afficher_fiche_qualification()
-
-elif st.session_state.page == "dashboard_qualifs":
+elif page == "Dashboard Qualifs":
     afficher_dashboard_qualifications()
-
-elif st.session_state.page == "aide":
-    st.title("Aide & méthode")
+else:  # Aide
+   
     st.markdown(
         """
         - **Importer** : utilisez le bouton "Fournisseurs" pour charger vos données de commandes.
