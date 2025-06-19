@@ -130,35 +130,13 @@ def afficher_dashboard_fournisseurs():
                 afficher_form_qualification(row['Fournisseur'])
 
 # --- Page: Dashboard Qualifs ---
-
-  def afficher_dashboard_qualifications():
+def afficher_dashboard_qualifications():
     st.header("📈 Dashboard des qualifications")
-    # Charger liste des fournisseurs et leurs qualifications
+    # Charger liste des fournisseurs (tout) et leurs qualifications
     df_fourn = st.session_state.fournisseurs_df.copy()
-    df_qual = pd.DataFrame(charger_qualifications())
+    df_qual = pd.DataFrame(charger_qualifications()) if st.session_state.qualifications else pd.DataFrame(columns=["Fournisseur", "Statut final"])
     # Merge pour inclure tous les fournisseurs
-    if not df_qual.empty:
-        df = df_fourn.merge(df_qual, on="Fournisseur", how="left")
-    else:
-        df = df_fourn.copy()
-        df["Statut final"] = None
-    # Statut par défaut pour non-qualifiés
-    df["Statut final"] = df["Statut final"].fillna("Non qualifiés")
-
-    # Répartition par statut
-    st.subheader("Répartition des fournisseurs par statut")
-    stats = df["Statut final"].value_counts().rename_axis("Statut").reset_index(name="Nombre")
-    fig = px.bar(stats, x="Statut", y="Nombre", color="Statut", title="Répartition des statuts")
-    st.plotly_chart(fig, use_container_width=True)
-    # Charger liste des fournisseurs et leurs qualifications
-    df_fourn = st.session_state.fournisseurs_df.copy()
-    df_qual = pd.DataFrame(charger_qualifications())
-    # Merge pour inclure tous les fournisseurs
-    if not df_qual.empty:
-        df = df_fourn.merge(df_qual, on="Fournisseur", how="left")
-    else:
-        df = df_fourn.copy()
-        df["Statut final"] = None
+    df = df_fourn.merge(df_qual, on="Fournisseur", how="left")
     # Statut par défaut pour non-qualifiés
     df["Statut final"] = df["Statut final"].fillna("Non qualifiés")
 
@@ -182,7 +160,6 @@ def afficher_dashboard_fournisseurs():
     st.dataframe(df_sel[["Fournisseur"] + sel_cols])
 
     if sel_cols:
-        # Moyennes
         moy = df_sel.groupby("Fournisseur")[sel_cols].mean().reset_index()
         fig2 = px.bar(
             moy.melt(id_vars="Fournisseur", var_name="Critère", value_name="Moyenne"),
@@ -190,4 +167,3 @@ def afficher_dashboard_fournisseurs():
             title="Notes Moyennes par Fournisseur"
         )
         st.plotly_chart(fig2, use_container_width=True)
-
