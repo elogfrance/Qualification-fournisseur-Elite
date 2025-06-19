@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 QUAL_JSON_PATH = os.path.join(BASE_DIR, "data", "qualifications.json")
 FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data_current.json")
 OLD_FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data.json")
@@ -35,7 +35,7 @@ def sauvegarder_fournisseurs(df: pd.DataFrame):
 if "qualifications" not in st.session_state:
     st.session_state.qualifications = charger_qualifications()
 
-# toujours charger le dernier fichier fournisseur à chaque lancement
+# ⚠️ Toujours recharger la dernière version des fournisseurs
 st.session_state.fournisseurs_df = charger_fournisseurs()
 
 st.set_page_config(
@@ -89,7 +89,6 @@ def afficher_dashboard_fournisseurs():
 
             result = result.sort_values(by="Nombre_commandes", ascending=False)
 
-            # sauvegarde immédiate et maj session
             sauvegarder_fournisseurs(result)
             st.session_state.fournisseurs_df = result
 
