@@ -188,16 +188,12 @@ def afficher_fiche_qualification():
         st.session_state.page = "fournisseurs"
         st.rerun()
 
-# --- Page: Dashboard Qualifs ---
-# --- Page: Dashboard Qualifs ---
 def afficher_dashboard_qualifications():
     st.header("📈 Dashboard des qualifications")
 
-    # Charger liste des fournisseurs (tout) et leurs qualifications
+    # Charger fournisseurs + qualifications
     df_fourn = st.session_state.fournisseurs_df.copy()
-    df_qual = pd.DataFrame(charger_qualifications()) \
-        if st.session_state.qualifications \
-        else pd.DataFrame(columns=["Fournisseur","Statut final"])
+    df_qual = pd.DataFrame(charger_qualifications()) if st.session_state.qualifications else pd.DataFrame(columns=["Fournisseur","Statut final"])
     df = df_fourn.merge(df_qual, on="Fournisseur", how="left")
     df["Statut final"] = df["Statut final"].fillna("Non qualifiés")
 
@@ -218,7 +214,27 @@ def afficher_dashboard_qualifications():
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # … le reste du code …
+    # — Filtres & tableau synthèse —
+    st.sidebar.header("Filtres qualifications")
+    fournisseurs = df["Fournisseur"].tolist()
+    sel_fourn = st.sidebar.multiselect("Fournisseurs", fournisseurs, default=fournisseurs, key="dash_fourn")
+    num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+    sel_cols = st.sidebar.multiselect("Critères numériques", num_cols, default=num_cols, key="dash_cols")
+
+    df_sel = df[df["Fournisseur"].isin(sel_fourn)]
+
+    st.subheader("Tableau synthèse")
+    st.dataframe(df_sel[["Fournisseur"] + sel_cols])
+
+    if sel_cols:
+        moy = df_sel.groupby("Fournisseur")[sel_cols].mean().reset_index()
+        fig2 = px.bar(
+            moy.melt(id_vars="Fournisseur", var_name="Critère", value_name="Moyenne"),
+            x="Critère", y="Moyenne", color="Fournisseur", barmode="group",
+            title="Notes Moyennes par Fournisseur"
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+
 
 # --- Routage des pages ---
 if st.session_state.page == "home":
