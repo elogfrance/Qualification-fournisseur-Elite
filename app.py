@@ -2,35 +2,41 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import shutil
 
-# 📍 Chemin du fichier de sauvegarde
-JSON_PATH = "data/qualifications.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+QUAL_JSON_PATH = os.path.join(BASE_DIR, "data", "qualifications.json")
+FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data_current.json")
+OLD_FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data.json")
 
-# 🧠 Fonction : charger les qualifications depuis le fichier JSON
 def charger_qualifications():
-    if os.path.exists(JSON_PATH):
-        with open(JSON_PATH, "r") as f:
+    if os.path.exists(QUAL_JSON_PATH):
+        with open(QUAL_JSON_PATH, "r") as f:
             return json.load(f)
     return []
 
-# 💾 Fonction : sauvegarder les qualifications dans le fichier JSON
 def sauvegarder_qualifications(data):
-    with open(JSON_PATH, "w") as f:
+    os.makedirs(os.path.dirname(QUAL_JSON_PATH), exist_ok=True)
+    with open(QUAL_JSON_PATH, "w") as f:
         json.dump(data, f, indent=2)
 
-# 🔄 Fonction de nettoyage de nom de fournisseur
-def clean(nom):
-    return str(nom).strip().lower()
+def charger_fournisseurs():
+    os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
+    if not os.path.exists(FOURN_JSON_PATH) and os.path.exists(OLD_FOURN_JSON_PATH):
+        shutil.copy(OLD_FOURN_JSON_PATH, FOURN_JSON_PATH)
+    if os.path.exists(FOURN_JSON_PATH):
+        return pd.read_json(FOURN_JSON_PATH)
+    return pd.DataFrame()
 
-# 🧠 Initialisation de session_state au démarrage de l'app
+def sauvegarder_fournisseurs(df: pd.DataFrame):
+    os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
+    df.to_json(FOURN_JSON_PATH, orient="records", force_ascii=False, indent=2)
+
 if "qualifications" not in st.session_state:
     st.session_state.qualifications = charger_qualifications()
 
-if "page" not in st.session_state:
-    st.session_state.page = "home"
-
-if "fournisseur_en_cours" not in st.session_state:
-    st.session_state.fournisseur_en_cours = None
+# ⚠️ Toujours recharger la dernière version des fournisseurs
+st.session_state.fournisseurs_df = charger_fournisseurs()
 
 st.set_page_config(
     page_title="Qualification Fournisseur Express",
@@ -38,7 +44,6 @@ st.set_page_config(
     layout="centered"
 )
 
-# Logo
 st.image("assets/logo_marketparts.png", width=200)
 
 st.title("Projet : Qualification Fournisseur Express")
@@ -51,89 +56,102 @@ Bienvenue dans l’outil de qualification des fournisseurs MKP.
 Chaque qualification prend moins de 10 minutes.
 """)
 
+if "page" not in st.session_state:
+    st.session_state.page = "home"
+
+def clean(nom):
+    return str(nom).strip().lower()
+
 def afficher_dashboard_fournisseurs():
-    st.title("\U0001F4CA Dashboard des fournisseurs")
-    fichier = st.file_uploader("\U0001F4C1 Importer le fichier Excel de suivi des délais", type=["xlsx"])
+    st.title("📊 Tableau des fournisseurs à qualifier")
+    fichier = st.file_uploader("📁 Importer le fichier des commandes", type=["xlsx"])
 
     if fichier:
         try:
-            df = pd.read_excel(fichier, skiprows=2)
+            df = pd.read_excel(fichier)
             df = df.rename(columns={
-                df.columns[0]: "Fournisseur",
-                df.columns[1]: "Nb Commandes",
-                df.columns[2]: "Délai moyen (jours)"
+                "Supplier name": "Fournisseur",
+                "Date ARC fournisseur reçu": "Date ARC",
+                "Date ready for pickup": "Date Ready"
             })
 
-            def urgence(delai):
-                if pd.isna(delai):
-                    return ""
-                elif delai <= 3:
-                    return "\U0001F7E2 Faible"
-                elif delai <= 7:
-                    return "\U0001F7E0 Moyen"
-                else:
-                    return "\U0001F534 Urgent"
+            df["Date ARC"] = pd.to_datetime(df["Date ARC"], errors="coerce")
+            df["Date Ready"] = pd.to_datetime(df["Date Ready"], errors="coerce")
+            df = df.dropna(subset=["Date ARC", "Date Ready", "Fournisseur"])
 
-            df["Niveau d'urgence"] = df["Délai moyen (jours)"].apply(urgence)
+            df["Délai (jours)"] = (df["Date Ready"] - df["Date ARC"]).dt.days
+            df["Délai (jours)"] = pd.to_numeric(df["Délai (jours)"], errors="coerce")
 
-            def statut_depuis_qualifications(nom_frs):
-                for fiche in st.session_state.qualifications:
-                    if clean(fiche["Fournisseur"]) == clean(nom_frs):
-                        return fiche.get("Statut final", "")
-                return "\u23F3 À traiter"
+            result = df.groupby("Fournisseur").agg(
+                Nombre_commandes=("Fournisseur", "count"),
+                Délai_moyen=("Délai (jours)", lambda x: round(x.dropna().mean(), 1))
+            ).reset_index()
 
-            df["Statut qualification"] = df["Fournisseur"].apply(statut_depuis_qualifications)
+            result = result.sort_values(by="Nombre_commandes", ascending=False)
 
-            st.session_state.fournisseurs_df = df.copy()
-            st.success("\u2705 Liste de fournisseurs enregistrée dans l’application.")
+            sauvegarder_fournisseurs(result)
+            st.session_state.fournisseurs_df = result
 
+            st.success("✅ Données importées et sauvegardées.")
         except Exception as e:
-            st.error(f"Erreur lors de l’import du fichier : {e}")
+            st.error(f"Erreur pendant le traitement du fichier : {e}")
 
-    if "fournisseurs_df" in st.session_state:
-        df = st.session_state.fournisseurs_df
-        st.markdown("### Liste des fournisseurs à qualifier")
+    if not st.session_state.fournisseurs_df.empty:
+        st.markdown("### Données fournisseurs en mémoire")
 
-        for index, row in df.iterrows():
+        for index, row in st.session_state.fournisseurs_df.iterrows():
             with st.expander(f"➡️ {row['Fournisseur']}"):
-                col1, col2, col3 = st.columns([2, 2, 2])
-                col1.metric("\U0001F4E6 Commandes", row["Nb Commandes"])
-                col2.metric("⏱️ Délai moyen", f"{row['Délai moyen (jours)']} j")
-                col3.metric("\U0001F6A8 Urgence", row["Niveau d'urgence"])
+                col1, col2 = st.columns(2)
+                col1.metric("📦 Commandes", row["Nombre_commandes"])
+                col2.metric("⏱️ Délai moyen", f"{row['Délai_moyen']} j")
 
-                st.write("\U0001F5C2️ **Statut actuel** :", row["Statut qualification"])
-
-                if st.button("\U0001F4DD Ouvrir la grille de qualification", key=f"qualif_{index}"):
+                if st.button("📝 Accéder à la qualification", key=f"btn_qualif_{index}"):
                     st.session_state.fournisseur_en_cours = row["Fournisseur"]
                     st.session_state.page = "qualification"
                     st.rerun()
     else:
-        st.info("\U0001F4E5 Veuillez importer un fichier Excel pour commencer.")
+        st.info("📥 Veuillez importer un fichier pour voir le tableau.")
 
 def afficher_fiche_qualification():
-    fournisseur = st.session_state.get("fournisseur_en_cours", None)
+    fournisseur = st.session_state.get("fournisseur_en_cours")
     if not fournisseur:
         st.warning("Aucun fournisseur sélectionné.")
         return
 
-    fiche_existante = next((fiche for fiche in st.session_state.qualifications if clean(fiche["Fournisseur"]) == clean(fournisseur)), None)
+    fiche_existante = next(
+        (
+            f for f in st.session_state.qualifications
+            if clean(f.get("Fournisseur")) == clean(fournisseur)
+        ),
+        None
+    )
 
-    st.title(f"\U0001F4DD Qualification : {fournisseur}")
+    st.title(f"📝 Qualification : {fournisseur}")
 
-    contact = st.text_input("\U0001F464 Contact principal", value=fiche_existante.get("Contact") if fiche_existante else "")
-    pays = st.text_input("\U0001F30D Pays", value=fiche_existante.get("Pays") if fiche_existante else "")
-    stock_identifiable = st.selectbox("\U0001F4E6 Stock réel identifiable ?", ["Oui", "Non"], index=["Oui", "Non"].index(fiche_existante.get("Stock réel", "Oui")) if fiche_existante else 0)
-    xdock_present = st.selectbox("\U0001F501 Présence de xdock ?", ["Oui", "Non"], index=["Oui", "Non"].index(fiche_existante.get("Xdock", "Non")) if fiche_existante else 0)
-    delai_stock = st.number_input("⏱️ Délai annoncé (stock)", min_value=0, value=fiche_existante.get("Délai stock", 0) if fiche_existante else 0)
-    delai_xdock = st.number_input("⏱️ Délai annoncé (xdock)", min_value=0, value=fiche_existante.get("Délai xdock", 0) if fiche_existante else 0)
-    processus_commande = st.selectbox("📋 Processus de commande clair ?", ["Oui", "Partiel", "Non"], index=["Oui", "Partiel", "Non"].index(fiche_existante.get("Processus commande", "Oui")) if fiche_existante else 0)
-    transport = st.selectbox("\U0001F69A Qui gère le transport ?", ["MKP", "Fournisseur"], index=["MKP", "Fournisseur"].index(fiche_existante.get("Transport", "MKP")) if fiche_existante else 0)
-    tracking = st.selectbox("\U0001F4E6 Tracking fourni ?", ["Oui", "Non"], index=["Oui", "Non"].index(fiche_existante.get("Tracking", "Oui")) if fiche_existante else 0)
-    poids_volume = st.selectbox("\U0001F4CF Poids/volume communiqués ?", ["Oui", "Non"], index=["Oui", "Non"].index(fiche_existante.get("Poids/volume", "Oui")) if fiche_existante else 0)
-    statut_final = st.selectbox("\U0001F4CC Statut final", ["✅", "⚠️", "❌"], index=["✅", "⚠️", "❌"].index(fiche_existante.get("Statut final", "✅")) if fiche_existante else 0)
-    commentaire = st.text_area("\U0001F4DD Commentaire", value=fiche_existante.get("Commentaire", "") if fiche_existante else "")
+    contact = st.text_input("👤 Contact principal", value=fiche_existante.get("Contact") if fiche_existante else "")
+    pays = st.text_input("🌍 Pays", value=fiche_existante.get("Pays") if fiche_existante else "")
+    stock_identifiable = st.selectbox("📦 Stock réel identifiable ?", ["Oui", "Non"],
+                                      index=["Oui", "Non"].index(fiche_existante["Stock réel"]) if fiche_existante else 0)
+    xdock_present = st.selectbox("🔁 Présence de xdock ?", ["Oui", "Non"],
+                                 index=["Oui", "Non"].index(fiche_existante["Xdock"]) if fiche_existante else 0)
+    delai_stock = st.number_input("⏱️ Délai annoncé (stock)", min_value=0,
+                                  value=fiche_existante.get("Délai stock", 0) if fiche_existante else 0)
+    delai_xdock = st.number_input("⏱️ Délai annoncé (xdock)", min_value=0,
+                                  value=fiche_existante.get("Délai xdock", 0) if fiche_existante else 0)
+    processus_commande = st.selectbox("📋 Processus de commande clair ?", ["Oui", "Partiel", "Non"],
+                                      index=["Oui", "Partiel", "Non"].index(fiche_existante["Processus commande"]) if fiche_existante else 0)
+    transport = st.selectbox("🚚 Qui gère le transport ?", ["MKP", "Fournisseur"],
+                             index=["MKP", "Fournisseur"].index(fiche_existante["Transport"]) if fiche_existante else 0)
+    tracking = st.selectbox("📦 Tracking fourni ?", ["Oui", "Non"],
+                            index=["Oui", "Non"].index(fiche_existante["Tracking"]) if fiche_existante else 0)
+    poids_volume = st.selectbox("📏 Poids/volume communiqués ?", ["Oui", "Non"],
+                                index=["Oui", "Non"].index(fiche_existante["Poids/volume"]) if fiche_existante else 0)
+    statut_final = st.selectbox("📌 Statut final", ["✅", "⚠️", "❌"],
+                                index=["✅", "⚠️", "❌"].index(fiche_existante["Statut final"]) if fiche_existante else 0)
+    commentaire = st.text_area("📝 Commentaire",
+                               value=fiche_existante.get("Commentaire", "") if fiche_existante else "")
 
-    if st.button("💾 Enregistrer"):
+    if st.button("📂 Enregistrer"):
         nouvelle_fiche = {
             "Fournisseur": fournisseur,
             "Contact": contact,
@@ -151,29 +169,29 @@ def afficher_fiche_qualification():
         }
 
         st.session_state.qualifications = [
-            f for f in st.session_state.qualifications if clean(f["Fournisseur"]) != clean(fournisseur)
+            f for f in st.session_state.qualifications if clean(f.get("Fournisseur")) != clean(fournisseur)
         ]
 
         st.session_state.qualifications.append(nouvelle_fiche)
         sauvegarder_qualifications(st.session_state.qualifications)
 
-        st.success("✅ Fiche enregistrée.")
+        st.success("✅ Données sauvegardées.")
+        st.write("📁 Aperçu du fichier qualifications.json :")
+        st.json(st.session_state.qualifications)
+
         st.session_state.page = "fournisseurs"
         st.rerun()
 
-# Navigation
 if st.session_state.page == "home":
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗂️ Accéder aux fournisseurs"):
+        if st.button("📂️ Accéder aux fournisseurs"):
             st.session_state.page = "fournisseurs"
             st.rerun()
     with col2:
         if st.button("📘 Aide & méthode"):
             st.info("Méthode en cours de rédaction.")
-
 elif st.session_state.page == "fournisseurs":
     afficher_dashboard_fournisseurs()
-
 elif st.session_state.page == "qualification":
     afficher_fiche_qualification()
