@@ -130,25 +130,25 @@ def afficher_fiche_qualification():
 
     contact = st.text_input("👤 Contact principal", value=fiche_existante.get("Contact") if fiche_existante else "")
     pays = st.text_input("🌍 Pays", value=fiche_existante.get("Pays") if fiche_existante else "")
-    stock_identifiable = st.selectbox("📦 Stock réel identifiable ?", ["Oui", "Non"],
-                                      index=["Oui", "Non"].index(fiche_existante["Stock réel"]) if fiche_existante else 0)
-    xdock_present = st.selectbox("🔁 Présence de xdock ?", ["Oui", "Non"],
-                                 index=["Oui", "Non"].index(fiche_existante["Xdock"]) if fiche_existante else 0)
+    stock_identifiable = st.selectbox("📦 Stock réel identifiable ?", [" ", "Oui", "Non"],
+                                      index=[" ", "Oui", "Non"].index(fiche_existante["Stock réel"]) if fiche_existante else 0)
+    xdock_present = st.selectbox("🔁 Présence de xdock ?", [" ", "Oui", "Non"],
+                                 index=[" ", "Oui", "Non"].index(fiche_existante["Xdock"]) if fiche_existante else 0)
     delai_stock = st.number_input("⏱️ Délai annoncé (stock)", min_value=0,
                                   value=fiche_existante.get("Délai stock", 0) if fiche_existante else 0)
     delai_xdock = st.number_input("⏱️ Délai annoncé (xdock)", min_value=0,
                                   value=fiche_existante.get("Délai xdock", 0) if fiche_existante else 0)
-    processus_commande = st.selectbox("📋 Processus de commande clair ?", ["Oui", "Partiel", "Non"],
-                                      index=["Oui", "Partiel", "Non"].index(fiche_existante["Processus commande"]) if fiche_existante else 0)
+    processus_commande = st.selectbox("📋 Processus de commande clair ?", [" ","Oui", "Partiel", "Non"],
+                                      index=[" ","Oui", "Partiel", "Non"].index(fiche_existante["Processus commande"]) if fiche_existante else 0)
     transport = st.selectbox("🚚 Qui gère le transport ?", ["MKP", "Fournisseur"],
                              index=["MKP", "Fournisseur"].index(fiche_existante["Transport"]) if fiche_existante else 0)
-    tracking = st.selectbox("📦 Tracking fourni ?", ["Oui", "Non"],
-                            index=["Oui", "Non"].index(fiche_existante["Tracking"]) if fiche_existante else 0)
-    Condition_paiement = st.selectbox(" condition de paiement ?", [" ", "Oui", "Non"],
-                            index=["Oui", "Non", " "].index(fiche_existante["condition de paiement"]) if fiche_existante else 0)
+    tracking = st.selectbox("📦 Tracking fourni ?", [" ", "Oui", "Non"],
+                            index=[" ", "Oui", "Non"].index(fiche_existante["Tracking"]) if fiche_existante else 0)
+    condition_paiement = st.selectbox(" Condition de paiement ", [" ", "A la commande", "A expédition", " X jours "],
+                            index=[" ", "Oui", "Non"].index(fiche_existante["condition de paiement"]) if fiche_existante else 0)
     
-    poids_volume = st.selectbox("📏 Poids/volume communiqués ?", ["Oui", "Non"],
-                                index=["Oui", "Non"].index(fiche_existante["Poids/volume"]) if fiche_existante else 0)
+    poids_volume = st.selectbox("📏 Poids/volume communiqués ?", [" ", "Oui", "Non"],
+                                index=[" ", "Oui", "Non"].index(fiche_existante["Poids/volume"]) if fiche_existante else 0)
     statut_final = st.selectbox("📌 Statut final", ["✅", "⚠️", "❌"],
                                 index=["✅", "⚠️", "❌"].index(fiche_existante["Statut final"]) if fiche_existante else 0)
     commentaire = st.text_area("📝 Commentaire",
