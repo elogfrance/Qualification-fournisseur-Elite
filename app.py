@@ -99,7 +99,17 @@ def afficher_dashboard_fournisseurs():
 
     if not st.session_state.fournisseurs_df.empty:
         st.markdown("### Données fournisseurs en mémoire")
-        st.dataframe(st.session_state.fournisseurs_df)
+
+        for index, row in st.session_state.fournisseurs_df.iterrows():
+            with st.expander(f"➡️ {row['Fournisseur']}"):
+                col1, col2 = st.columns(2)
+                col1.metric("📦 Commandes", row["Nombre_commandes"])
+                col2.metric("⏱️ Délai moyen", f"{row['Délai_moyen']} j")
+
+                if st.button("📝 Accéder à la qualification", key=f"btn_qualif_{index}"):
+                    st.session_state.fournisseur_en_cours = row["Fournisseur"]
+                    st.session_state.page = "qualification"
+                    st.rerun()
     else:
         st.info("📥 Veuillez importer un fichier pour voir le tableau.")
 
