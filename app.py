@@ -130,7 +130,7 @@ def afficher_dashboard_fournisseurs():
                 afficher_form_qualification(row['Fournisseur'])
 
 # --- Page: Dashboard Qualifs ---
-    def afficher_dashboard_qualifications():
+def afficher_dashboard_qualifications():
     st.header("📈 Dashboard des qualifications")
     # Charger liste des fournisseurs (tout) et leurs qualifications
     df_fourn = st.session_state.fournisseurs_df.copy()
