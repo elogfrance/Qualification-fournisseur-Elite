@@ -156,7 +156,7 @@ def afficher_fiche_qualification():
         index=[" ", "Oui", "Non"].index(fiche_existante.get("Poids/volume", " ")) if fiche_existante else 0
     )
     statut_final = st.selectbox(
-        "📌 Statut final", ["Non qualifiés", "Qualifié", "En cours", "Non éligible à l'Elite"],
+        "📌 Statut final", ["✅", "⚠️", "❌"],
         index=["✅", "⚠️", "❌"].index(fiche_existante.get("Statut final", "✅")) if fiche_existante else 0
     )
     commentaire = st.text_area("📝 Commentaire", value=fiche_existante.get("Commentaire", "") if fiche_existante else "")
@@ -202,7 +202,20 @@ def afficher_dashboard_qualifications():
     num_cols = df.select_dtypes(include="number").columns.tolist()
     sel_cols = st.sidebar.multiselect("Critères numériques", num_cols, default=num_cols)
 
+    # Filtrer selon sélection
     df_f = df[df["Fournisseur"].isin(sel_fourn)]
+
+    # Répartition par statut
+    st.subheader("Répartition des fournisseurs par statut")
+    status_counts = df_f["Statut final"].value_counts().reset_index()
+    status_counts.columns = ["Statut", "Nombre"]
+    fig_status = px.bar(
+        status_counts, x="Statut", y="Nombre", color="Statut",
+        title="Nombre de fournisseurs par statut"
+    )
+    st.plotly_chart(fig_status, use_container_width=True)
+
+    # Tableau synthèse
     st.subheader("Tableau synthèse")
     st.dataframe(df_f[["Fournisseur"] + sel_cols])
 
