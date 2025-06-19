@@ -216,7 +216,7 @@ def afficher_fiche_qualification():
 
 def afficher_dashboard_qualifications():
     st.header("📈 Dashboard des qualifications")
-    st.markdown("Delais et nbr de commandes mesurés 90 jours avant le 19/06/2025")
+    st.markdown("Delais et nbr de commandes mesurés sur 90 jours avant le 19/06/2025")
     st.markdown("Delais caluclés entre validation arc et date de reception e log")
 
     # Charger fournisseurs + qualifications
