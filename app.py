@@ -185,4 +185,6 @@ def afficher_fiche_qualification():
 
         st.session_state.page = "fournisseurs"
         st.rerun()
+        elif st.session_state.page == "qualification":
+    afficher_fiche_qualification()
 
