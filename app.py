@@ -1,20 +1,7 @@
-import streamlit as st
-import pandas as pd
+def afficher_dashboard_fournisseurs():
+    st.title("📊 Dashboard des fournisseurs")
 
-# Configuration de la page
-st.set_page_config(
-    page_title="Qualification Fournisseur Express",
-    page_icon="📦",
-    layout="centered"
-)
-
-# --------------------------
-# PAGE : Suivi des délais
-# --------------------------
-def afficher_suivi_delais():
-    st.title("📦 Suivi des délais d'expédition")
-
-    fichier = st.file_uploader("📁 Importer le fichier Excel (type ARC → Ready)", type=["xlsx"])
+    fichier = st.file_uploader("📁 Importer le fichier Excel de suivi des délais", type=["xlsx"])
 
     if fichier:
         try:
@@ -36,59 +23,22 @@ def afficher_suivi_delais():
                     return "🔴 Urgent"
 
             df["Niveau d'urgence"] = df["Délai moyen (jours)"].apply(urgence)
+            df["Statut qualification"] = "⏳ À traiter"
 
-            st.success("✅ Données traitées avec succès")
-            st.dataframe(df, use_container_width=True)
+            st.markdown("### Liste des fournisseurs à qualifier")
+            for index, row in df.iterrows():
+                with st.expander(f"➡️ {row['Fournisseur']}"):
+                    col1, col2, col3 = st.columns([2, 2, 2])
+                    col1.metric("📦 Commandes", row["Nb Commandes"])
+                    col2.metric("⏱️ Délai moyen", f"{row['Délai moyen (jours)']} j")
+                    col3.metric("🚨 Urgence", row["Niveau d'urgence"])
+
+                    st.write("🗂️ **Statut actuel** :", row["Statut qualification"])
+
+                    if st.button("📝 Ouvrir la grille de qualification", key=f"qualif_{index}"):
+                        st.session_state.fournisseur_en_cours = row["Fournisseur"]
+                        st.session_state.page = "qualification"
+                        st.rerun()
 
         except Exception as e:
             st.error(f"Erreur de traitement : {e}")
-
-# --------------------------
-# PAGE PRINCIPALE
-# --------------------------
-def main():
-    # Logo
-    st.image("assets/logo_marketparts.png", width=200)
-    st.title("Projet : Qualification Fournisseur Express")
-
-    st.markdown("""
-    Bienvenue dans l’outil de qualification des fournisseurs MKP.
-
-    **Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement, et à communiquer des données fiables sur leurs stocks et processus logistiques.
-
-    Chaque qualification prend moins de 10 minutes.
-    """)
-
-    if "page" not in st.session_state:
-        st.session_state.page = "home"
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        if st.button("🗂️ Accéder aux fournisseurs"):
-            st.session_state.page = "fournisseurs"
-            st.rerun()
-
-    with col2:
-        if st.button("📘 Aide & méthode"):
-            st.session_state.page = "aide"
-            st.rerun()
-
-    with col3:
-        if st.button("📦 Suivi délais réels"):
-            st.session_state.page = "delais"
-            st.rerun()
-
-    # Navigation
-    if st.session_state.page == "home":
-        st.info("👈 Sélectionne une section pour commencer.")
-    elif st.session_state.page == "fournisseurs":
-        st.warning("📌 La section 'fournisseurs' est en cours de développement.")
-    elif st.session_state.page == "aide":
-        st.info("📘 Une documentation simple sera ajoutée ici.")
-    elif st.session_state.page == "delais":
-        afficher_suivi_delais()
-
-# Lancement principal
-if __name__ == "__main__":
-    main()
