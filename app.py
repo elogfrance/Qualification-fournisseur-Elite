@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 
 # Configuration de la page
 st.set_page_config(
@@ -7,35 +8,65 @@ st.set_page_config(
     layout="centered"
 )
 
-# Logo (à adapter selon le nom du fichier)
-# st.image("logo_mkp.png", width=200)
-st.image("assets/logo_marketparts.png", width=200)
+# --------------------------
+# PAGE : Suivi des délais
+# --------------------------
+def afficher_suivi_delais():
+    st.title("📦 Suivi des délais d'expédition")
 
+    fichier = st.file_uploader("📁 Importer le fichier Excel (type ARC → Ready)", type=["xlsx"])
 
-# Titre principal
-st.title("Projet : Qualification Fournisseur Express")
+    if fichier:
+        try:
+            df = pd.read_excel(fichier, skiprows=2)
+            df = df.rename(columns={
+                df.columns[0]: "Fournisseur",
+                df.columns[1]: "Nb Commandes",
+                df.columns[2]: "Délai moyen (jours)"
+            })
 
-# Introduction
-st.markdown("""
-Bienvenue dans l’outil de qualification des fournisseurs MKP.
+            def urgence(delai):
+                if pd.isna(delai):
+                    return ""
+                elif delai <= 3:
+                    return "🟢 Faible"
+                elif delai <= 7:
+                    return "🟠 Moyen"
+                else:
+                    return "🔴 Urgent"
 
-**Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement, et à communiquer des données fiables sur leurs stocks et processus logistiques.
+            df["Niveau d'urgence"] = df["Délai moyen (jours)"].apply(urgence)
 
-Chaque qualification prend moins de 10 minutes.
+            st.success("✅ Données traitées avec succès")
+            st.dataframe(df, use_container_width=True)
 
-""")
+        except Exception as e:
+            st.error(f"Erreur de traitement : {e}")
 
-# Boutons de navigation (stockage état)
-if "page" not in st.session_state:
-    st.session_state.page = "home"
+# --------------------------
+# PAGE PRINCIPALE
+# --------------------------
+def main():
+    # Logo
+    st.image("assets/logo_marketparts.png", width=200)
+    st.title("Projet : Qualification Fournisseur Express")
 
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("🗂️ Accéder aux fournisseurs"):
-        st.session_state.page = "fournisseurs"
-        st.experimental_rerun()
+    st.markdown("""
+    Bienvenue dans l’outil de qualification des fournisseurs MKP.
 
-with col2:
-    if st.button("📘 Aide & méthode"):
-        st.session_state.page = "aide"
-        st.experimental_rerun()
+    **Objectif :** vérifier la fiabilité des fournisseurs, leur capacité à expédier rapidement, et à communiquer des données fiables sur leurs stocks et processus logistiques.
+
+    Chaque qualification prend moins de 10 minutes.
+    """)
+
+    if "page" not in st.session_state:
+        st.session_state.page = "home"
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🗂️ Accéder aux fournisseurs"):
+            st.session_state.page = "fournisseurs"
+            st.rerun()
+    with col2:
+        if st.button("📘 Aide & méthode"):
+            st.session_state.page = "a_
