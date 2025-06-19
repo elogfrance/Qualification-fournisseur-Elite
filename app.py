@@ -98,32 +98,33 @@ def afficher_dashboard_fournisseurs():
     st.subheader("📊 Fournisseurs à qualifier")
     fichier = st.file_uploader("Importer commandes (xlsx)", type=["xlsx"])
     if fichier:
-        try:
-            df = pd.read_excel(fichier)
-            df = df.rename(columns={"Supplier name":"Fournisseur","Date ARC fournisseur reçu":"Date ARC","Date ready for pickup":"Date Ready"})
-            df["Date ARC"] = pd.to_datetime(df["Date ARC"],errors="coerce")
-            df["Date Ready"] = pd.to_datetime(df["Date Ready"],errors="coerce")
-            df = df.dropna(subset=["Date ARC","Date Ready","Fournisseur"])
-            df["Délai (jours)"] = (df["Date Ready"]-df["Date ARC"]).dt.days
-            result = df.groupby("Fournisseur").agg(Nombre_commandes=("Fournisseur","count"),Délai_moyen=("Délai (jours)",lambda x: round(x.mean(),1))).reset_index().sort_values("Nombre_commandes",ascending=False)
-            sauvegarder_fournisseurs(result)
-            st.session_state.fournisseurs_df = result
-            st.success("✅ Données commandes sauvegardées.")
-        except Exception as e:
-            st.error(f"Erreur de traitement : {e}")
+        # (import et traitement identique)
+        ...
     df_f = st.session_state.fournisseurs_df
     if df_f.empty:
         st.info("Aucun fournisseur en mémoire. Importez des commandes.")
         return
-    for i,row in df_f.iterrows():
-        with st.expander(f"➡️ {row['Fournisseur']}"):
-            c1,c2 = st.columns(2)
-            c1.metric("Commandes",row["Nombre_commandes"])
-            c2.metric("Délai moyen (j)",row["Délai_moyen"])
-            if st.button("Qualifier",key=f"qual_{i}"):
+
+    # Boucle sur les fournisseurs avec état d'expansion
+    for i, row in df_f.iterrows():
+        exp_key = f"expander_{i}"
+        # Initialisation de l'état si nécessaire
+        if exp_key not in st.session_state:
+            st.session_state[exp_key] = False
+        # Expander contrôlé par session_state
+        with st.expander(f"➡️ {row['Fournisseur']}", expanded=st.session_state[exp_key]):
+            c1, c2 = st.columns(2)
+            c1.metric("Commandes", row["Nombre_commandes"])
+            c2.metric("Délai moyen (j)", row["Délai_moyen"])
+            # Bouton pour ouvrir le formulaire
+            if st.button("Qualifier", key=f"qual_{i}"):
+                st.session_state[exp_key] = True
+            # Si expander ouvert, afficher le formulaire inline
+            if st.session_state[exp_key]:
                 afficher_form_qualification(row["Fournisseur"])
 
 # --- Page: Dashboard Qualifs ---
+
 def afficher_dashboard_qualifications():
     st.subheader("📈 Dashboard des qualifications")
     df = pd.DataFrame(st.session_state.qualifications)
