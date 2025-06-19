@@ -113,7 +113,81 @@ def afficher_dashboard_fournisseurs():
         st.info("📥 Veuillez importer un fichier pour voir le tableau.")
 
 def afficher_fiche_qualification():
+    fournisseur = st.session_state.get("fournisseur_en_cours")
+    if not fournisseur:
+        st.warning("Aucun fournisseur sélectionné.")
+        return
 
+    # Charge la fiche existante ou initialise-la
+    fiche_existante = next(
+        (f for f in st.session_state.qualifications
+         if clean(f.get("Fournisseur")) == clean(fournisseur)),
+        {}
+    )
+    st.title(f"📝 Qualification : {fournisseur}")
+
+    # Définition des champs selon la mise en page souhaitée
+    champs = [
+        {"label": "Fournisseur",                   "type": "text_static"},
+        {"label": "Contact principal",             "type": "text"},
+        {"label": "Pays",                          "type": "text"},
+        {"label": "Nb de commandes MKP",           "type": "number_static"},
+        {"label": "Délai moyen observé",           "type": "number_static"},
+        {"label": "Stock réel identifiable ?",     "type": "select", "options": ["Oui", "Non"]},
+        {"label": "Présence de xdock ?",           "type": "select", "options": ["Oui", "Non"]},
+        {"label": "Délai annoncé en stock",        "type": "number"},
+        {"label": "Délai annoncé xdock",           "type": "number"},
+        {"label": "Processus de commande clair ?", "type": "select", "options": ["Oui", "Partiel", "Non"]},
+        {"label": "Qui gère le transport ?",       "type": "select", "options": ["MKP", "Fournisseur"]},
+        {"label": "Tracking fourni ?",             "type": "select", "options": ["Oui", "Non"]},
+        {"label": "Poids/volume communiqués ?",    "type": "select", "options": ["Oui", "Non"]},
+        {"label": "✅ Statut final",                "type": "select", "options": ["Eligible", "En cours", "Non eligible"]},
+        {"label": "Commentaire global",            "type": "textarea"}
+    ]
+
+    # Affichage en 3 colonnes
+    for champ in champs:
+        col1, col2, col3 = st.columns([3, 3, 4])
+        label = champ["label"]
+
+        # Colonne Champ
+        col1.markdown(f"**{label}**")
+        val = fiche_existante.get(label, "")
+        com = fiche_existante.get(f"{label}__com", "")
+        key = label.replace(" ", "_")
+
+        # Colonne Réponse
+        if champ["type"] == "text_static":
+            col2.text_input("", value=val, disabled=True, key=f"{key}_stat")
+        elif champ["type"] == "text":
+            fiche_existante[label] = col2.text_input("", value=val, key=key)
+        elif champ["type"] == "number_static":
+            col2.number_input("", value=val if isinstance(val, (int, float)) else 0,
+                              disabled=True, key=f"{key}_stat")
+        elif champ["type"] == "number":
+            fiche_existante[label] = col2.number_input("", value=val if isinstance(val, (int, float)) else 0,
+                                                       key=key)
+        elif champ["type"] == "select":
+            options = champ["options"]
+            idx = options.index(val) if val in options else 0
+            fiche_existante[label] = col2.selectbox("", options, index=idx, key=key)
+        elif champ["type"] == "textarea":
+            fiche_existante[label] = col2.text_area("", value=val, key=key)
+
+        # Colonne Commentaire libre
+        fiche_existante[f"{label}__com"] = col3.text_area("", value=com, key=f"{key}_com", height=80)
+
+    # Bouton Enregistrer
+    if st.button("🔖 Enregistrer la fiche"):
+        st.session_state.qualifications = [
+            f for f in st.session_state.qualifications
+            if clean(f.get("Fournisseur")) != clean(fournisseur)
+        ]
+        st.session_state.qualifications.append(fiche_existante)
+        sauvegarder_qualifications(st.session_state.qualifications)
+        st.success("✅ Fiche enregistrée avec succès !")
+        st.session_state.page = "fournisseurs"
+        st.rerun()
 
 
 if st.session_state.page == "home":
