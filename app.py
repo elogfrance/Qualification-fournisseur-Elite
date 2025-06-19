@@ -2,11 +2,14 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import shutil  # Pour la copie de fichiers
 
 # 📍 Répertoires et chemins ABSOLUS
 BASE_DIR = os.path.dirname(__file__)
 QUAL_JSON_PATH = os.path.join(BASE_DIR, "data", "qualifications.json")
 FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data_current.json")
+# Ancien chemin JSON si existant (pour migration)
+OLD_FOURN_JSON_PATH = os.path.join(BASE_DIR, "data", "fournisseurs_data.json")
 
 # 🧠 Charger les qualifications depuis le JSON
 def charger_qualifications():
@@ -23,6 +26,11 @@ def sauvegarder_qualifications(data):
 
 # 🧠 Charger les fournisseurs depuis le JSON (dernier import)
 def charger_fournisseurs():
+    # Si le fichier courant n'existe pas, tenter une migration depuis l'ancien
+    os.makedirs(os.path.dirname(FOURN_JSON_PATH), exist_ok=True)
+    if not os.path.exists(FOURN_JSON_PATH) and os.path.exists(OLD_FOURN_JSON_PATH):
+        shutil.copy(OLD_FOURN_JSON_PATH, FOURN_JSON_PATH)
+
     if os.path.exists(FOURN_JSON_PATH):
         return pd.read_json(FOURN_JSON_PATH)
     return None
@@ -109,7 +117,7 @@ def afficher_dashboard_fournisseurs():
             st.session_state.fournisseurs_df = df.copy()
             sauvegarder_fournisseurs(st.session_state.fournisseurs_df)
             st.success(
-                "✅ Liste enregistrée et sauvegardée sur disco (data/fournisseurs_data_current.json)."
+                "✅ Liste enregistrée et sauvegardée sur disque (data/fournisseurs_data_current.json)."
             )
         except Exception as e:
             st.error(f"Erreur lors de l’import du fichier : {e}")
