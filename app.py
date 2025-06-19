@@ -9,7 +9,7 @@ st.set_page_config(
 
 # Logo (à adapter selon le nom du fichier)
 # st.image("logo_mkp.png", width=200)
-st.image("assets/logo_mkp.png", width=200)
+st.image("assets/logo_marketparts.png", width=200)
 
 
 # Titre principal
