@@ -5,6 +5,32 @@ import os
 import shutil
 import plotly.express as px
 
+# ─── Personnalisation des polices ───
+st.markdown(
+    """
+    <style>
+    /* Titre principal (h1) */
+    .css-1d391kg h1 {
+        font-size: 40px !important;
+    }
+    /* Sous-titres (h2, subheader) */
+    .css-1d391kg h2, .css-1d391kg .stSubheader {
+        font-size: 30px !important;
+    }
+    /* Texte standard (paragraphes, markdown) */
+    .css-1d391kg p, .css-1d391kg .stText {
+        font-size: 18px !important;
+    }
+    /* Widgets labels */
+    .css-1d391kg .st-bw {
+        font-size: 18px !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 # --- Chemins des fichiers de données ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 QUAL_JSON_PATH = os.path.join(BASE_DIR, "data", "qualifications.json")
