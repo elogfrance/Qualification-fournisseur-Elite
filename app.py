@@ -145,9 +145,18 @@ def afficher_dashboard_qualifications():
         st.experimental_rerun()
 
 # --- Navigation principale ---
+# Définition des pages disponibles
 pages = ["Accueil", "Fournisseurs", "Dashboard Qualifs"]
-page = st.sidebar.selectbox("Menu", pages, index=pages.index(st.session_state.page))
+# Choix du page par défaut (fallback sur Accueil si valeur invalide)
+def get_page_index():
+    current = st.session_state.page if st.session_state.page in pages else "Accueil"
+    return pages.index(current)
+
+page = st.sidebar.selectbox("Menu", pages, index=get_page_index(), key="main_menu")
+# Mise à jour du state
 st.session_state.page = page
+
+# Routage selon la page sélectionnée
 if page == "Accueil":
     afficher_home()
 elif page == "Fournisseurs":
