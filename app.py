@@ -166,7 +166,10 @@ def afficher_fiche_qualification():
         st.session_state.qualifications.append(nouvelle_fiche)
         sauvegarder_qualifications(st.session_state.qualifications)
 
-        st.success("✅ Fiche enregistrée.")
+        st.success("✅ Données sauvegardées.")
+        st.write("📁 Contenu actuel du fichier JSON :")
+        st.json(st.session_state.qualifications)
+
         st.session_state.page = "fournisseurs"
         st.rerun()
 
