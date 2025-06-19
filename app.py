@@ -294,11 +294,7 @@ if st.session_state.page == "home":
         if st.button("📈 Dashboard Qualifs"):
             st.session_state.page = "dashboard_qualifs"
             st.rerun()
-    with col3:
-        if st.button("📘 Détail du projet"):
-            st.session_state.page = "aide"
-            st.rerun()
-
+   
 elif st.session_state.page == "fournisseurs":
     afficher_dashboard_fournisseurs()
 
@@ -307,6 +303,5 @@ elif st.session_state.page == "qualification":
 
 elif st.session_state.page == "dashboard_qualifs":
     afficher_dashboard_qualifications()
-elif st.session_state.page == "dashboard_qualifs":
-    afficher_presentation()
+
 
