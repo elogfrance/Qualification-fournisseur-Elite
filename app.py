@@ -150,8 +150,8 @@ def afficher_fiche_qualification():
         index=[" ", "Oui", "Partiel", "Non"].index(fiche_existante.get("Processus commande", " ")) if fiche_existante else 0
     )
     transport = st.selectbox(
-        "🚚 Qui gère le transport ?", ["MKP", "Fournisseur"],
-        index=["MKP", "Fournisseur"].index(fiche_existante.get("Transport", "MKP")) if fiche_existante else 0
+        "🚚 Qui gère le transport ?", [" ", "MKP", "Fournisseur"],
+        index=[" ", "MKP", "Fournisseur"].index(fiche_existante.get("Transport", "MKP")) if fiche_existante else 0
     )
     tracking = st.selectbox(
         "📦 Tracking fourni ?", [" ", "Oui", "Non"],
