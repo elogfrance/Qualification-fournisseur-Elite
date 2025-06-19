@@ -186,15 +186,3 @@ def afficher_fiche_qualification():
         st.session_state.page = "fournisseurs"
         st.rerun()
 
-if st.session_state.page == "home":
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📂️ Accéder aux fournisseurs"):
-            st.session_state.page = "fournisseurs"
-            st.rerun()
-    with col2:
-        if st.button("📘 Aide & méthode"):
-            st.info("Méthode en cours de rédaction.")
-elif st.session_state.page == "fournisseurs":
-    afficher_dashboard_fournisseurs()
-
